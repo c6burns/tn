@@ -4,7 +4,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/cmak
 include(tnTesting)
 enable_testing()
 
-set(TN_TARGET_LINK_LIBS "")
+set(TN_LIBRARIES "")
+set(TN_INCLUDE_DIRS "")
 
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
@@ -42,25 +43,33 @@ endif()
 
 #
 # argparse dependency
-#include_directories(${CMAKE_SOURCE_DIR}/deps/argparse)
-#add_subdirectory(${CMAKE_SOURCE_DIR}/deps/argparse)
-#list(APPEND TN_TARGET_LINK_LIBS argparse)
+#list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/argparse)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/argparse)
+#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/argparse)
+#list(APPEND TN_LIBRARIES argparse)
 
 
 #
 # aws-c-common dependency
-include_directories(${CMAKE_SOURCE_DIR}/deps/aws-c-common/include)
-include_directories(${CMAKE_BINARY_DIR}/deps/aws-c-common/generated/include)
-add_subdirectory(${CMAKE_SOURCE_DIR}/deps/aws-c-common)
-list(APPEND TN_TARGET_LINK_LIBS aws-c-common)
+set(ORIG_CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})
+set(CMAKE_PROJECT_NAME aws-c-common)
+exec_program(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS submodule update --init --recursive deps/aws-c-common)
+list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/include)
+list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/deps/aws-c-common/generated/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/deps/aws-c-common/generated/include)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common)
+list(APPEND TN_LIBRARIES aws-c-common)
+set(CMAKE_PROJECT_NAME ${ORIG_CMAKE_PROJECT_NAME})
 
 
 #
 # libuv dependency
-set(BUILD_TESTING OFF)
-include_directories(${CMAKE_SOURCE_DIR}/deps/libuv/include)
-add_subdirectory(${CMAKE_SOURCE_DIR}/deps/libuv)
-list(APPEND TN_TARGET_LINK_LIBS uv_a)
+exec_program(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS submodule update --init --recursive deps/libuv)
+list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv)
+list(APPEND TN_LIBRARIES uv_a)
 
 
 project(tn LANGUAGES C)
@@ -69,7 +78,9 @@ project(tn LANGUAGES C)
 #
 # build tn library
 set(TN_SRC ${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src/tn)
+list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
+list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src/tn)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src/tn)
 set(TN_LIBRARY_SRCS
 	${TN_SRC}/src/tn/log.c
 	${TN_SRC}/include/tn/log.h
@@ -105,14 +116,16 @@ set(TN_LIBRARY_SRCS
 	${TN_SRC}/include/tn/event.h
 	${TN_SRC}/src/tn/cmd.c
 	${TN_SRC}/include/tn/cmd.h
+	${TN_SRC}/src/tn/term.c
+	${TN_SRC}/include/tn/term.h
 	${TN_SRC}/include/tn/error.h
 	${TN_SRC}/include/tn/test_harness.h
 	${TN_SRC}/include/tn/config.h
 )
 add_library(tn STATIC ${TN_LIBRARY_SRCS})
-target_link_libraries(tn ${TN_TARGET_LINK_LIBS})
+target_link_libraries(tn ${TN_LIBRARIES})
 target_compile_definitions(tn PRIVATE ${TN_TARGET_COMPILE_DEFS})
-list(APPEND TN_TARGET_LINK_LIBS tn)
+list(APPEND TN_LIBRARIES tn)
 
 
 #
@@ -140,10 +153,12 @@ tn_add_test_case(test_queue_spsc_full)
 tn_add_test_case(test_queue_spsc_npot)
 
 tn_generate_test_driver(tn-tests tn)
-target_link_libraries(tn-tests ${TN_TARGET_LINK_LIBS})
+target_link_libraries(tn-tests ${TN_LIBRARIES})
 target_compile_definitions(tn-tests PRIVATE ${TN_TARGET_COMPILE_DEFS})
 
 # runner for single test for easy debug step through an impl issue
-#tn_test_single(test_event test_events "${TN_TARGET_LINK_LIBS}" "${TN_TARGET_COMPILE_DEFS}")
+#tn_test_single(test_event test_events "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
 
 
+set(TN_INCLUDE_DIRS ${TN_INCLUDE_DIRS} PARENT_SCOPE)
+set(TN_LIBRARIES ${TN_LIBRARIES} PARENT_SCOPE)

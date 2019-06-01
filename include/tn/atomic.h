@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
+#define TN_ATOMIC_INIT(x) { .value = (void *)(uintptr_t)(x) }
 
 typedef struct tn_atomic_s {
 	void *value;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/cmake ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 include(tnTesting)
@@ -6,10 +6,6 @@ enable_testing()
 
 set(TN_LIBRARIES "")
 set(TN_INCLUDE_DIRS "")
-
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Release)
-endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	list(APPEND TN_TARGET_COMPILE_DEFS -DTN_CMAKE_BUILD_DEBUG)

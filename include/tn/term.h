@@ -13,6 +13,34 @@
 #define TN_TERM_MAX_CMD 16
 #define TN_TERM_INIT { .priv = NULL, .state = TN_ATOMIC_INIT(TN_TERM_STATE_NEW), }
 
+enum tn_term_key {
+	TN_TERM_KEY_NONE,
+	TN_TERM_KEY_F1,
+	TN_TERM_KEY_F2,
+	TN_TERM_KEY_F3,
+	TN_TERM_KEY_F4,
+	TN_TERM_KEY_F5,
+	TN_TERM_KEY_F6,
+	TN_TERM_KEY_F7,
+	TN_TERM_KEY_F8,
+	TN_TERM_KEY_F9,
+	TN_TERM_KEY_F10,
+	TN_TERM_KEY_F11,
+	TN_TERM_KEY_F12,
+	TN_TERM_KEY_HOME,
+	TN_TERM_KEY_END,
+	TN_TERM_KEY_INSERT,
+	TN_TERM_KEY_DELETE,
+	TN_TERM_KEY_BACKSPACE,
+	TN_TERM_KEY_UP,
+	TN_TERM_KEY_DOWN,
+	TN_TERM_KEY_RIGHT,
+	TN_TERM_KEY_LEFT,
+	TN_TERM_KEY_TAB,
+	TN_TERM_KEY_ESC,
+	TN_TERM_KEY_INVALID,
+};
+
 typedef enum tn_term_state_e {
 	TN_TERM_STATE_NEW,
     TN_TERM_STATE_STARTING,
@@ -34,6 +62,7 @@ struct tn_term_csi {
 	int param_count;
 	int param[8];
 	int open_count;
+	char shift_char;
 };
 
 struct tn_term_buf {
@@ -55,6 +84,7 @@ typedef struct tn_term_s {
 	tn_atomic_t state;
 	struct tn_term_pos size;
 	struct tn_term_pos pos_last;
+	int debug_print;
 } tn_term_t;
 
 
@@ -64,6 +94,7 @@ void tn_term_cleanup(tn_term_t *term);
 int tn_term_start(tn_term_t *term, tn_term_callback_char_func cb_char, tn_term_callback_cmd_func cb_cmd);
 int tn_term_stop(tn_term_t *term);
 
+void tn_term_debug_print(tn_term_t *term, bool enabled);
 tn_term_state_t tn_term_state(tn_term_t *term);
 int tn_term_callback_cmd(tn_term_t *term, tn_term_callback_cmd_func cb_cmd);
 int tn_term_callback_char(tn_term_t *term, tn_term_callback_char_func cb_char);

@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
+project(tn LANGUAGES C)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/cmake ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
-include(tnTesting)
-enable_testing()
-
+set(TN_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps)
 set(TN_LIBRARIES "")
 set(TN_INCLUDE_DIRS "")
 
@@ -47,6 +45,16 @@ endif()
 
 #
 # aws-c-common dependency
+if(NOT EXISTS ${TN_DEPS_DIR}/aws-c-common)
+	execute_process(COMMAND git clone https://github.com/c6burns/aws-c-common WORKING_DIRECTORY ${TN_DEPS_DIR})
+endif()
+
+add_custom_target(aws-c-common_update
+	COMMAND git checkout master
+	COMMAND git pull
+	WORKING_DIRECTORY ${TN_DEPS_DIR}
+)
+
 set(ORIG_CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})
 set(CMAKE_PROJECT_NAME aws-c-common)
 exec_program(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS submodule update --init --recursive deps/aws-c-common)
@@ -55,24 +63,38 @@ list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/deps/aws-c-common/genera
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/deps/aws-c-common/generated/include)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common)
+add_dependencies(aws-c-common aws-c-common_update)
 list(APPEND TN_LIBRARIES aws-c-common)
 set(CMAKE_PROJECT_NAME ${ORIG_CMAKE_PROJECT_NAME})
 
 
 #
 # libuv dependency
+if(NOT EXISTS ${TN_DEPS_DIR}/libuv)
+	execute_process(COMMAND git clone https://github.com/c6burns/libuv WORKING_DIRECTORY ${TN_DEPS_DIR})
+endif()
+
+add_custom_target(libuv_update
+	COMMAND git checkout master
+	COMMAND git pull
+	WORKING_DIRECTORY ${TN_DEPS_DIR}
+)
+
 exec_program(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS submodule update --init --recursive deps/libuv)
 list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv)
+add_dependencies(uv_a libuv_update)
 list(APPEND TN_LIBRARIES uv_a)
-
-
-project(tn LANGUAGES C)
 
 
 #
 # build tn library
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/cmake)
+include(tnTesting)
+enable_testing()
+
 set(TN_SRC ${CMAKE_CURRENT_SOURCE_DIR})
 list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src/tn)

@@ -9,7 +9,7 @@
 
 #include "tn/buffer.h"
 
-const char const *tn_term_key_string[] = {
+const char *const tn_term_key_string[] = {
 	"",
 	"[F1]",
 	"[F2]",
@@ -139,7 +139,34 @@ void tn_term_key_handle(tn_term_t *term, enum tn_term_key key)
 		break;
 	case TN_TERM_KEY_ESC:
 		break;
+	case TN_TERM_KEY_NONE:
+	case TN_TERM_KEY_INVALID:
+	default:
+		break;
 	}
+}
+
+// private ------------------------------------------------------------------------------------------------------
+int tn_term_csi_print(tn_term_t *term, const char *buf, int len)
+{
+	TN_ASSERT(term && buf);
+
+	char str[128];
+	int istr = 0;
+
+	str[istr++] = '[';
+	for (int i = 0; i < len; i++) {
+		const char c = buf[i];
+		if (c == 27) {
+			str[istr++] = '^';
+			continue;
+		}
+		str[istr++] = c;
+	}
+	str[istr++] = ']';
+	str[istr++] = '\0';
+
+	return tn_term_write(term, "%s", str);
 }
 
 // private ------------------------------------------------------------------------------------------------------
@@ -195,8 +222,10 @@ int tn_term_csi_parse(tn_term_t *term, const char *input, int maxlen, struct tn_
 }
 
 // private ------------------------------------------------------------------------------------------------------
-void tn_term_csi_handle(tn_term_t *term, const struct tn_term_csi *csi)
+int tn_term_csi_handle(tn_term_t *term, const struct tn_term_csi *csi)
 {
+	int unhandled = 0;
+
 	switch (csi->seq_end) {
 	case 'A':
 		if (csi->open_count == 1) {
@@ -300,9 +329,15 @@ void tn_term_csi_handle(tn_term_t *term, const struct tn_term_csi *csi)
 		case 24:
 			tn_term_key_handle(term, TN_TERM_KEY_F12);
 			break;
+		default:
+			return TN_ERROR;
 		}
 		break;
+	default:
+		return TN_ERROR;
 	}
+
+	return TN_SUCCESS;
 }
 
 // private ------------------------------------------------------------------------------------------------------
@@ -337,7 +372,7 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 				TN_GUARD_CLEANUP(tn_term_buf_write_u8(term, '\0'));
 				tn_term_write(term, "\ncommand: %s\n\n", priv->bbuf.buffer);
 				if (term->cb_cmd) {
-					term->cb_cmd(priv->bbuf.buffer);
+					term->cb_cmd((const char *)priv->bbuf.buffer);
 				}
 				aws_byte_buf_reset(&priv->bbuf, true);
 			}
@@ -345,7 +380,9 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 		case 27: // escape seq (or possible just esc keypress)
 			if (tn_term_csi_parse(term, &buf[i], len - i, &csi) == TN_SUCCESS) {
 				i += csi.seq_len - 1;
-				tn_term_csi_handle(term, &csi);
+				if (tn_term_csi_handle(term, &csi)) {
+					if (term->debug_print) tn_term_csi_print(term, &buf[i], csi.seq_len);
+				}
 			} else {
 				tn_term_key_handle(term, TN_TERM_KEY_ESC);
 			}

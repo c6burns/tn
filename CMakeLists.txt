@@ -5,6 +5,10 @@ set(TN_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps)
 set(TN_LIBRARIES "")
 set(TN_INCLUDE_DIRS "")
 
+if(NOT EXISTS ${TN_DEPS_DIR})
+	file(MAKE_DIRECTORY ${TN_DEPS_DIR})
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	list(APPEND TN_TARGET_COMPILE_DEFS -DTN_CMAKE_BUILD_DEBUG)
 endif()
@@ -74,7 +78,7 @@ if(NOT EXISTS ${TN_DEPS_DIR}/libuv)
 endif()
 
 add_custom_target(libuv_update
-	COMMAND git checkout master
+	COMMAND git checkout v1.x
 	COMMAND git pull
 	WORKING_DIRECTORY ${TN_DEPS_DIR}/libuv
 )

@@ -52,12 +52,11 @@ endif()
 add_custom_target(aws-c-common_update
 	COMMAND git checkout master
 	COMMAND git pull
-	WORKING_DIRECTORY ${TN_DEPS_DIR}
+	WORKING_DIRECTORY ${TN_DEPS_DIR}/aws-c-common
 )
 
 set(ORIG_CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})
 set(CMAKE_PROJECT_NAME aws-c-common)
-exec_program(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS submodule update --init --recursive deps/aws-c-common)
 list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/include)
 list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/deps/aws-c-common/generated/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/aws-c-common/include)
@@ -77,10 +76,9 @@ endif()
 add_custom_target(libuv_update
 	COMMAND git checkout master
 	COMMAND git pull
-	WORKING_DIRECTORY ${TN_DEPS_DIR}
+	WORKING_DIRECTORY ${TN_DEPS_DIR}/libuv
 )
 
-exec_program(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS submodule update --init --recursive deps/libuv)
 list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv)

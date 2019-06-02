@@ -379,10 +379,10 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 			break;
 		case 27: // escape seq (or possible just esc keypress)
 			if (tn_term_csi_parse(term, &buf[i], len - i, &csi) == TN_SUCCESS) {
-				i += csi.seq_len - 1;
 				if (tn_term_csi_handle(term, &csi)) {
 					if (term->debug_print) tn_term_csi_print(term, &buf[i], csi.seq_len);
 				}
+				i += csi.seq_len - 1;
 			} else {
 				tn_term_key_handle(term, TN_TERM_KEY_ESC);
 			}

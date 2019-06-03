@@ -36,7 +36,7 @@ const char *const tn_term_key_string[] = {
 	"[ESC]",
 };
 
-typedef struct rc_term_priv_s {
+typedef struct tn_term_priv_s {
 	uv_loop_t uv_loop;
 	uv_signal_t uv_signal;
 	int ttyin_fd, ttyout_fd;
@@ -640,13 +640,14 @@ int tn_term_read_char(char *out_c)
 int tn_term_setup(tn_term_t *term)
 {
 	TN_ASSERT(term);
-	return TN_ERROR;
+	return TN_SUCCESS;
 }
 
 // --------------------------------------------------------------------------------------------------------------
 void tn_term_cleanup(tn_term_t *term)
 {
 	TN_ASSERT(term);
+	uv_tty_reset_mode();
 }
 
 // --------------------------------------------------------------------------------------------------------------

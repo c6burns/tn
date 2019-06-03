@@ -399,7 +399,6 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 	return;
 
 cleanup:
-	printf("error writing to buffer\n");
 	tn_term_state_set(term, TN_TERM_STATE_STOPPING);
 }
 
@@ -531,17 +530,15 @@ void run_term_thread_io(void *data)
 	priv->ttyin_fd = 0;
 	priv->ttyout_fd = 1;
 
-	TN_ASSERT(UV_TTY == uv_guess_handle(priv->ttyin_fd));
-	TN_ASSERT(UV_TTY == uv_guess_handle(priv->ttyout_fd));
+	TN_GUARD_CLEANUP(uv_guess_handle(priv->ttyin_fd) == UV_TTY);
+	TN_GUARD_CLEANUP(uv_guess_handle(priv->ttyout_fd) == UV_TTY);
 
 	TN_GUARD_CLEANUP(uv_tty_init(&priv->uv_loop, &priv->uv_tty_in, priv->ttyin_fd, 1));
-	TN_ASSERT(uv_is_readable((uv_stream_t*)&priv->uv_tty_in));
-	TN_ASSERT(!uv_is_writable((uv_stream_t*)&priv->uv_tty_in));
+	TN_GUARD_CLEANUP(!uv_is_readable((uv_stream_t*)&priv->uv_tty_in));
 	priv->uv_tty_in.data = term;
 
 	TN_GUARD_CLEANUP(uv_tty_init(&priv->uv_loop, &priv->uv_tty_out, priv->ttyout_fd, 0));
-	TN_ASSERT(!uv_is_readable((uv_stream_t*)&priv->uv_tty_out));
-	TN_ASSERT(uv_is_writable((uv_stream_t*)&priv->uv_tty_out));
+	TN_GUARD_CLEANUP(!uv_is_writable((uv_stream_t*)&priv->uv_tty_out));
 	priv->uv_tty_out.data = term;
 
 	TN_GUARD_CLEANUP(uv_tty_get_winsize(&priv->uv_tty_out, &term->size.x, &term->size.y));
@@ -571,7 +568,6 @@ void run_term_thread_io(void *data)
 	return;
 
 cleanup:
-	printf("term thread error\n");
 	tn_term_state_set(term, TN_TERM_STATE_ERROR);
 }
 

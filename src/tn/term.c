@@ -528,8 +528,8 @@ void run_term_thread_io(void *data)
 	priv->ttyin_fd = 0;
 	priv->ttyout_fd = 1;
 
-	TN_GUARD_CLEANUP(uv_guess_handle(priv->ttyin_fd) == UV_TTY);
-	TN_GUARD_CLEANUP(uv_guess_handle(priv->ttyout_fd) == UV_TTY);
+	TN_GUARD_CLEANUP(uv_guess_handle(priv->ttyin_fd) != UV_TTY);
+	TN_GUARD_CLEANUP(uv_guess_handle(priv->ttyout_fd) != UV_TTY);
 
 	TN_GUARD_CLEANUP(uv_tty_init(&priv->uv_loop, &priv->uv_tty_in, priv->ttyin_fd, 1));
 	TN_GUARD_CLEANUP(!uv_is_readable((uv_stream_t*)&priv->uv_tty_in));

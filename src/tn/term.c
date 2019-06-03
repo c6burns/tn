@@ -1,13 +1,12 @@
 #include "tn/term.h"
 
-#include "uv.h"
-#ifdef _WIN32
-#	include <io.h>
-#endif
 #include <ctype.h>
 #include <stdarg.h>
 
+#include "uv.h"
+
 #include "tn/buffer.h"
+
 
 const char *const tn_term_key_string[] = {
 	"",
@@ -529,47 +528,8 @@ void run_term_thread_io(void *data)
 	uv_timer_start(&priv->uv_timer_tty, on_term_timer_cb, 50, 50);
 	priv->uv_timer_tty.data = term;
 
-#ifdef _WIN32
-	HANDLE handle;
-	handle = CreateFileA("conin$",
-		GENERIC_READ | GENERIC_WRITE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL);
-	TN_ASSERT(handle != INVALID_HANDLE_VALUE);
-	priv->ttyin_fd = _open_osfhandle((intptr_t)handle, 0);
-
-	handle = CreateFileA("conout$",
-		GENERIC_READ | GENERIC_WRITE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL);
-	TN_ASSERT(handle != INVALID_HANDLE_VALUE);
-	priv->ttyout_fd = _open_osfhandle((intptr_t)handle, 0);
-#else /* unix */
-	priv->ttyin_fd = open("/dev/tty", O_RDONLY, 0);
-	if (priv->ttyin_fd < 0) {
-		fprintf(stderr, "Cannot open /dev/tty as read-only: %s\n", strerror(errno));
-		fflush(stderr);
-		goto cleanup;
-	}
-
-	priv->ttyout_fd = open("/dev/tty", O_WRONLY, 0);
-	if (priv->ttyout_fd < 0) {
-		fprintf(stderr, "Cannot open /dev/tty as write-only: %s\n", strerror(errno));
-		fflush(stderr);
-		goto cleanup;
-	}
-#endif
-
-	TN_ASSERT(priv->ttyin_fd >= 0);
-	TN_ASSERT(priv->ttyout_fd >= 0);
-
-	TN_ASSERT(UV_UNKNOWN_HANDLE == uv_guess_handle(-1));
+	priv->ttyin_fd = 0;
+	priv->ttyout_fd = 1;
 
 	TN_ASSERT(UV_TTY == uv_guess_handle(priv->ttyin_fd));
 	TN_ASSERT(UV_TTY == uv_guess_handle(priv->ttyout_fd));

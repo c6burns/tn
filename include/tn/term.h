@@ -1,6 +1,10 @@
 #ifndef TN_TERM_H
 #define TN_TERM_H
 
+#ifdef _WIN32
+#	include <io.h>
+#endif
+
 #include "tn/error.h"
 #include "tn/allocator.h"
 #include "tn/atomic.h"

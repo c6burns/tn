@@ -68,13 +68,11 @@ int tn_term_buf_write_u8(tn_term_t *term, char in_char)
 	int ret = TN_ERROR;
 	tn_term_priv_t *priv = term->priv;
 
-	tn_mutex_lock(&term->mtx);
 	TN_GUARD_CLEANUP(!aws_byte_buf_write_u8(&priv->bbuf, in_char));
 
 	ret = TN_SUCCESS;
 
 cleanup:
-	tn_mutex_unlock(&term->mtx);
 	return ret;
 }
 

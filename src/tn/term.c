@@ -61,6 +61,26 @@ void tn_term_state_set(tn_term_t *term, tn_term_state_t state)
 }
 
 // private ------------------------------------------------------------------------------------------------------
+int tn_term_write_direct(tn_term_t *term, const char *fmt, ...)
+{
+	uv_buf_t buf;
+	int len;
+	char str[TN_TERM_MAX_LINE];
+	tn_term_priv_t *priv = term->priv;
+
+	va_list args;
+	va_start(args, fmt);
+	len = vsnprintf(str, TN_TERM_MAX_LINE, fmt, args);
+	va_end(args);
+
+	buf.base = str;
+	buf.len = len;
+	TN_GUARD(uv_try_write((uv_stream_t*)&priv->uv_tty_out, &buf, 1) <= 0);
+
+	return TN_SUCCESS;
+}
+
+// private ------------------------------------------------------------------------------------------------------
 int tn_term_buf_write_u8(tn_term_t *term, char in_char)
 {
 	TN_ASSERT(term && term->priv);
@@ -81,7 +101,7 @@ int tn_term_key_print(tn_term_t *term, enum tn_term_key key)
 {
 	TN_GUARD(key <= TN_TERM_KEY_NONE);
 	TN_GUARD(key >= TN_TERM_KEY_INVALID);
-	return tn_term_write(term, tn_term_key_string[key]);
+	return tn_term_write_direct(term, tn_term_key_string[key]);
 }
 
 // private ------------------------------------------------------------------------------------------------------
@@ -89,58 +109,7 @@ void tn_term_key_handle(tn_term_t *term, enum tn_term_key key)
 {
 	if (term->debug_print) tn_term_key_print(term, key);
 
-	switch (key) {
-	case TN_TERM_KEY_F1:
-		break;
-	case TN_TERM_KEY_F2:
-		break;
-	case TN_TERM_KEY_F3:
-		break;
-	case TN_TERM_KEY_F4:
-		break;
-	case TN_TERM_KEY_F5:
-		break;
-	case TN_TERM_KEY_F6:
-		break;
-	case TN_TERM_KEY_F7:
-		break;
-	case TN_TERM_KEY_F8:
-		break;
-	case TN_TERM_KEY_F9:
-		break;
-	case TN_TERM_KEY_F10:
-		break;
-	case TN_TERM_KEY_F11:
-		break;
-	case TN_TERM_KEY_F12:
-		break;
-	case TN_TERM_KEY_HOME:
-		break;
-	case TN_TERM_KEY_END:
-		break;
-	case TN_TERM_KEY_INSERT:
-		break;
-	case TN_TERM_KEY_DELETE:
-		break;
-	case TN_TERM_KEY_BACKSPACE:
-		break;
-	case TN_TERM_KEY_UP:
-		break;
-	case TN_TERM_KEY_DOWN:
-		break;
-	case TN_TERM_KEY_RIGHT:
-		break;
-	case TN_TERM_KEY_LEFT:
-		break;
-	case TN_TERM_KEY_TAB:
-		break;
-	case TN_TERM_KEY_ESC:
-		break;
-	case TN_TERM_KEY_NONE:
-	case TN_TERM_KEY_INVALID:
-	default:
-		break;
-	}
+	if (term->cb_key) term->cb_key(key);;
 }
 
 // private ------------------------------------------------------------------------------------------------------
@@ -163,7 +132,7 @@ int tn_term_csi_print(tn_term_t *term, const char *buf, int len)
 	str[istr++] = ']';
 	str[istr++] = '\0';
 
-	return tn_term_write(term, "%s", str);
+	return tn_term_write_direct(term, "%s", str);
 }
 
 // private ------------------------------------------------------------------------------------------------------
@@ -177,7 +146,7 @@ int tn_term_csi_parse(tn_term_t *term, const char *input, int maxlen, struct tn_
 	memset(csi, 0, sizeof(*csi));
 
 	TN_GUARD(maxlen < 3);
-	TN_GUARD(input[0] != '\x1b');
+	TN_GUARD(input[0] != '\033');
 
 	for (int i = 1; i < maxlen; i++) {
 		char c = input[i];
@@ -284,9 +253,9 @@ int tn_term_csi_handle(tn_term_t *term, const struct tn_term_csi *csi)
 		}
 		break;
 	case 'R':
-		term->pos_last.x = csi->param[0];
-		term->pos_last.y = csi->param[1];
-		tn_term_write(term, "[%d,%d]", term->pos_last.x, term->pos_last.y);
+		term->pos_last.y = csi->param[0];
+		term->pos_last.x = csi->param[1];
+		tn_term_write_direct(term, "[%d,%d]", term->pos_last.x, term->pos_last.y);
 		break;
 	case '~':
 		switch (csi->param[0]) {
@@ -346,13 +315,11 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 
 	for (int i = 0; i < len; i++) {
 		in_char = buf[i];
-		if (term->cb_char) {
-			term->cb_char(in_char);
-		}
 
 		switch (in_char) {
 		case 3: // ctrl-C
 		case 4: // ctrl-D
+			tn_term_key_handle(term, TN_TERM_KEY_BREAK);
 			tn_term_state_set(term, TN_TERM_STATE_STOPPING);
 			return;
 		case 8:
@@ -364,15 +331,13 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 			break;
 		case 12:
 		case 13:
-		case 15: // line ending
-			if (priv->bbuf.len > 0) {
-				TN_GUARD_CLEANUP(tn_term_buf_write_u8(term, '\0'));
-				tn_term_write(term, "\ncommand: %s\n\n", priv->bbuf.buffer);
-				if (term->cb_cmd) {
-					term->cb_cmd((const char *)priv->bbuf.buffer);
-				}
-				aws_byte_buf_reset(&priv->bbuf, true);
-			}
+		case 15: // line ending / enter key
+			tn_term_key_handle(term, TN_TERM_KEY_ENTER);
+			//if (priv->bbuf.len > 0) {
+			//	TN_GUARD_CLEANUP(tn_term_buf_write_u8(term, '\0'));
+			//	if (term->cb_cmd) term->cb_cmd((const char *)priv->bbuf.buffer);
+			//	aws_byte_buf_reset(&priv->bbuf, true);
+			//}
 			break;
 		case 27: // escape seq (or possible just esc keypress)
 			if (tn_term_csi_parse(term, &buf[i], len - i, &csi) == TN_SUCCESS) {
@@ -386,7 +351,9 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 			break;
 		default:
 			if (!isprint(in_char)) {
-				tn_term_write(term, "[%d]", (int)in_char);
+				tn_term_write_direct(term, "[%d]", (int)in_char);
+			} else {
+				if (term->cb_char) term->cb_char(in_char);
 			}
 			//printf("%c", in_char);
 			TN_GUARD_CLEANUP(tn_term_buf_write_u8(term, in_char));
@@ -397,7 +364,7 @@ void tn_term_input_handle(tn_term_t *term, const char *buf, int len)
 	return;
 
 cleanup:
-	tn_term_state_set(term, TN_TERM_STATE_STOPPING);
+	tn_term_state_set(term, TN_TERM_STATE_ERROR);
 }
 
 // private ------------------------------------------------------------------------------------------------------
@@ -427,21 +394,30 @@ void tn_term_uv_cleanup(tn_term_t *term)
 // private ------------------------------------------------------------------------------------------------------
 void tn_term_queue_process(tn_term_t *term)
 {
+	const uint64_t batch_id = tn_atomic_load(&term->batch_id);
+	//if (batch_id == term->batch_process_cache) return;
+
 	uv_buf_t buf;
-	struct tn_term_buf *qreq;
+	struct tn_term_buf *term_buf;
 	tn_term_priv_t *priv = term->priv;
 	
-	while (!tn_queue_spsc_pop_back(&term->queue_log, (void **)&qreq)) {
-		buf.base = qreq->buf;
-		buf.len = TN_BUFLEN_CAST(qreq->len);
-		uv_try_write((uv_stream_t*)&priv->uv_tty_out, &buf, 1);
+	while (tn_queue_spsc_peek(&term->buffer_queue, (void **)&term_buf) == TN_SUCCESS) {
+		if (batch_id == term->batch_process_cache) return;
+		tn_queue_spsc_pop_cached(&term->buffer_queue);
 
-		if (!memcmp(qreq->buf, "I love potatoes :D :D :D", 10)) {
-			tn_term_pos_store(term);
-		}
+		buf.base = term_buf->buf;
+		buf.len = TN_BUFLEN_CAST(term_buf->len);
+		TN_GUARD_CLEANUP(uv_try_write((uv_stream_t*)&priv->uv_tty_out, &buf, 1) <= 0);
 
-		TN_MEM_RELEASE(qreq);
+		TN_GUARD_CLEANUP(tn_list_ptr_push_back(&term->buffer_stack, term_buf));
 	}
+
+	term->batch_process_cache++;
+
+	return;
+
+cleanup:
+	tn_term_state_set(term, TN_TERM_STATE_ERROR);
 }
 
 // --------------------------------------------------------------------------------------------------------------
@@ -476,7 +452,7 @@ void on_term_timer_cb(uv_timer_t* handle)
 	tn_term_priv_t *priv = term->priv;
 
 	if (handle == &priv->uv_timer_tty) {
-		if (tn_term_state(term) == TN_TERM_STATE_STOPPING) {
+		if (tn_term_state(term) == TN_TERM_STATE_STOPPING || tn_term_state(term) == TN_TERM_STATE_ERROR) {
 			tn_term_uv_cleanup(term);
 		} else {
 			tn_term_queue_process(term);
@@ -508,7 +484,6 @@ void run_term_thread_io(void *data)
 	TN_GUARD_CLEANUP(state != TN_TERM_STATE_STARTING);
 	
 	memset(priv, 0, sizeof(*priv));
-	tn_mutex_setup(&term->mtx);
 	term->priv = priv;
 
 	TN_GUARD_CLEANUP(aws_byte_buf_init(&priv->bbuf, aws_default_allocator(), TN_TERM_MAX_LINE));
@@ -544,25 +519,13 @@ void run_term_thread_io(void *data)
 	TN_GUARD_CLEANUP(uv_tty_set_mode(&priv->uv_tty_in, UV_TTY_MODE_RAW));
 	TN_GUARD_CLEANUP(uv_read_start((uv_stream_t *)&priv->uv_tty_in, on_term_alloc_cb, on_term_read_cb));
 
-	//if (uv_guess_handle(1) == UV_TTY) {
-	//	uv_write_t req;
-	//	uv_buf_t buf;
-	//	buf.base = "\033[41;37m";
-	//	buf.len = strlen(buf.base);
-	//	uv_write(&req, (uv_stream_t*)&tty_out, &buf, 1, NULL);
-	//}
-
 	state = tn_term_state(term);
 	if (state == TN_TERM_STATE_STARTING) {
 		tn_term_state_set(term, TN_TERM_STATE_STARTED);
-
-		tn_term_write(term, "I love potatoes :D :D :D\n\n");
-
 		TN_GUARD_CLEANUP(uv_run(&priv->uv_loop, UV_RUN_DEFAULT));
 	}
 
 	tn_term_state_set(term, TN_TERM_STATE_STOPPED);
-	tn_mutex_cleanup(&term->mtx);
 	return;
 
 cleanup:
@@ -584,46 +547,91 @@ tn_term_state_t tn_term_state(tn_term_t *term)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_term_read_char(char *out_c)
+void tn_term_callback_char(tn_term_t *term, tn_term_callback_char_func cb_char)
 {
-	// if (!aws_byte_cursor_read_u8(&priv.bpos, out_c)) return -1;
-	return 0;
+	TN_ASSERT(term);
+	term->cb_char = cb_char;
+}
+
+// --------------------------------------------------------------------------------------------------------------
+void tn_term_callback_key(tn_term_t *term, tn_term_callback_key_func cb_key)
+{
+	TN_ASSERT(term);
+	term->cb_key = cb_key;
+}
+
+// --------------------------------------------------------------------------------------------------------------
+void tn_term_callback_resize(tn_term_t *term, tn_term_callback_resize_func cb_resize)
+{
+	TN_ASSERT(term);
+	term->cb_resize = cb_resize;
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_setup(tn_term_t *term)
 {
 	TN_ASSERT(term);
+
+	TN_GUARD_CLEANUP(term->priv != NULL);
+
+	tn_mutex_setup(&term->mtx);
+
+	memset(&term->buffer_stack, 0, sizeof(term->buffer_stack));
+	TN_GUARD_NULL_CLEANUP(term->buffer_pool = TN_MEM_ACQUIRE(sizeof(*term->buffer_pool) * TN_TERM_BUFFER_STACK_SIZE));
+
+	TN_GUARD_CLEANUP(tn_list_ptr_setup(&term->buffer_stack, TN_TERM_BUFFER_STACK_SIZE));
+
+	struct tn_term_buf *tb;
+	for (int i = 1; i <= TN_TERM_BUFFER_STACK_SIZE; i++) {
+		tb = term->buffer_pool + TN_TERM_BUFFER_STACK_SIZE - i;
+		TN_GUARD_CLEANUP(tn_list_ptr_push_back(&term->buffer_stack, tb));
+	}
+
+	TN_GUARD_CLEANUP(tn_queue_spsc_setup(&term->buffer_queue, TN_TERM_MAX_LINE));
+
+	tn_atomic_store(&term->batch_id, 0);
+	term->batch_request_cache = 0;
+	term->batch_process_cache = 0;
+
+	term->cb_char = NULL;
+	term->cb_key = NULL;
+	term->cb_resize = NULL;
+
 	return TN_SUCCESS;
+
+cleanup:
+	tn_term_state_set(term, TN_TERM_STATE_ERROR);
+	return TN_ERROR;
 }
 
 // --------------------------------------------------------------------------------------------------------------
 void tn_term_cleanup(tn_term_t *term)
 {
 	TN_ASSERT(term);
+
+	tn_queue_spsc_cleanup(&term->buffer_queue);
+	tn_list_ptr_cleanup(&term->buffer_stack);
+	TN_MEM_RELEASE(term->buffer_pool);
+	tn_mutex_cleanup(&term->mtx);
+
 	uv_tty_reset_mode();
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_term_start(tn_term_t *term, tn_term_callback_char_func cb_char, tn_term_callback_cmd_func cb_cmd)
+int tn_term_start(tn_term_t *term)
 {
 	TN_ASSERT(term);
 
 	tn_term_state_t state = tn_term_state(term);
 	TN_GUARD(state != TN_TERM_STATE_STOPPED && state != TN_TERM_STATE_NEW);
 
-	term->cb_char = cb_char;
-	term->cb_cmd = cb_cmd;
 	tn_term_state_set(term, TN_TERM_STATE_STARTING);
 	TN_GUARD_CLEANUP(tn_thread_launch(&term->thread_io, run_term_thread_io, term));
-
-	TN_GUARD_CLEANUP(tn_queue_spsc_setup(&term->queue_log, TN_TERM_MAX_LINE));
 
 	return TN_SUCCESS;
 
 cleanup:
-
-	tn_term_state_set(term, TN_TERM_STATE_STOPPING);
+	tn_term_state_set(term, TN_TERM_STATE_ERROR);
 	return TN_ERROR;
 }
 
@@ -643,86 +651,146 @@ int tn_term_stop(tn_term_t *term)
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_clear(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[2J");
+	return tn_term_write(term, "\033[2J");
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_clear_down(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[J");
+	return tn_term_write(term, "\033[J");
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_clear_up(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[1J");
+	return tn_term_write(term, "\033[1J");
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_clear_line(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[2K");
+	return tn_term_write(term, "\033[2K");
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_clear_line_home(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[1K");
+	return tn_term_write(term, "\033[1K");
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_clear_line_end(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[K");
+	return tn_term_write(term, "\033[K");
+}
+
+// --------------------------------------------------------------------------------------------------------------
+int tn_term_pos_get(tn_term_t *term)
+{
+	return tn_term_write(term, "\033[6n");
+}
+
+// --------------------------------------------------------------------------------------------------------------
+int tn_term_pos_set(tn_term_t *term, uint16_t x, uint16_t y)
+{
+	x = x ? x : 1;
+	y = y ? y : 1;
+	return tn_term_write(term, "\033[%u;%uH", y, x);
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_pos_store(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[6n");
+	return tn_term_write(term, "\033[s");
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_pos_restore(tn_term_t *term)
 {
-	return tn_term_write(term, "\x1b[6n");
+	return tn_term_write(term, "\033[u");
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_pos_up(tn_term_t *term, int count)
 {
-	return tn_term_write(term, "\x1b[%dA", count ? count : 1);
+	return tn_term_write(term, "\033[%dA", count ? count : 1);
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_pos_down(tn_term_t *term, int count)
 {
-	return tn_term_write(term, "\x1b[%dB", count ? count : 1);
+	return tn_term_write(term, "\033[%dB", count ? count : 1);
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_pos_right(tn_term_t *term, int count)
 {
-	return tn_term_write(term, "\x1b[%dC", count ? count : 1);
+	return tn_term_write(term, "\033[%dC", count ? count : 1);
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_pos_left(tn_term_t *term, int count)
 {
-	return tn_term_write(term, "\x1b[%dD", count ? count : 1);
+	return tn_term_write(term, "\033[%dD", count ? count : 1);
 }
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_write(tn_term_t *term, const char *fmt, ...)
 {
-	struct tn_term_buf *req;
-	TN_GUARD_NULL(req = TN_MEM_ACQUIRE(sizeof(struct tn_term_buf)));
+	TN_ASSERT(term);
+
+	struct tn_term_buf *term_buf;
+	TN_GUARD(tn_list_ptr_pop_back(&term->buffer_stack, (void **)&term_buf));
 
 	va_list args;
 	va_start(args, fmt);
-	req->len = vsnprintf(req->buf, TN_TERM_MAX_LINE, fmt, args);
+	term_buf->len = vsnprintf(term_buf->buf, TN_TERM_MAX_LINE, fmt, args);
 	va_end(args);
 
-	TN_GUARD(req->len < 0);
-	return tn_queue_spsc_push(&term->queue_log, req);
+	term_buf->batch_id = term->batch_request_cache;
+
+	TN_GUARD(term_buf->len < 0);
+	return tn_queue_spsc_push(&term->buffer_queue, term_buf);
+}
+
+// --------------------------------------------------------------------------------------------------------------
+void tn_term_flush(tn_term_t *term)
+{
+	TN_ASSERT(term);
+	term->batch_request_cache++;
+	tn_atomic_store(&term->batch_id, term->batch_request_cache);
+}
+
+// --------------------------------------------------------------------------------------------------------------
+int tn_term_color_set(tn_term_t *term, uint8_t color)
+{
+	return tn_term_write(term, "\03338;5;%dm", color);
+}
+
+// --------------------------------------------------------------------------------------------------------------
+int tn_term_bgcolor_set(tn_term_t *term, enum tn_term_color color)
+{
+	return tn_term_write(term, "\03348;5;%dm", color);
+}
+
+// --------------------------------------------------------------------------------------------------------------
+uint8_t tn_term_color16(tn_term_t *term, enum tn_term_color color)
+{
+	return (color > 15) ? 15 : color;
+}
+
+// --------------------------------------------------------------------------------------------------------------
+uint8_t tn_term_color256(tn_term_t *term, uint8_t r, uint8_t g, uint8_t b)
+{
+	r = (r > 5) ? 5 : r;
+	g = (g > 5) ? 5 : g;
+	b = (b > 5) ? 5 : b;
+	return (r * 36) + (g * 6) + b + 16;
+
+}
+
+// --------------------------------------------------------------------------------------------------------------
+uint8_t tn_term_grey24(tn_term_t *term, uint8_t grey)
+{
+	return (grey > 23) ? 23 : grey;
 }

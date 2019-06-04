@@ -50,12 +50,12 @@ static const char *level_names[] = {
 
 #ifdef TN_LOG_USE_COLOR
 static const char *level_colors[] = {
-	"\x1b[90m",
-	"\x1b[36m",
-	"\x1b[32m",
-	"\x1b[33m",
-	"\x1b[31m",
-	"\x1b[35m",
+	"\033[90m",
+	"\033[36m",
+	"\033[32m",
+	"\033[33m",
+	"\033[31m",
+	"\033[35m",
 };
 #endif
 
@@ -221,7 +221,7 @@ void tn_log_log(int level, const char *func, const char *file, int line, uint64_
 		time_buf[strftime(time_buf, sizeof(time_buf), "%H:%M:%S", local_time)] = '\0';
 
 		if (tn_log_ctx.color) {
-			fprintf(stderr, "%s %s%-5s\x1b[0m \x1b[90m%llu:%s:%d - %s: \x1b[0m ", time_buf, level_colors[level], level_names[level], thread_id, file, line, func);
+			fprintf(stderr, "%s %s%-5s\033[0m \033[90m%llu:%s:%d - %s: \033[0m ", time_buf, level_colors[level], level_names[level], thread_id, file, line, func);
 		} else {
 			fprintf(stderr, "%s %-5s %llu:%s:%d - %s: ", time_buf, level_names[level], thread_id, file, line, func);
 		}

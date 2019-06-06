@@ -99,7 +99,7 @@ struct tn_term_buf {
 
 typedef void(*tn_term_callback_char_func)(char in_char);
 typedef void(*tn_term_callback_key_func)(enum tn_term_key key);
-typedef void(*tn_term_callback_resize_func)(int x, int y);
+typedef void(*tn_term_callback_resize_func)(uint16_t x, uint16_t y);
 
 typedef struct tn_term_s {
 	void *priv;
@@ -144,17 +144,18 @@ int tn_term_pos_get(tn_term_t *term);
 int tn_term_pos_set(tn_term_t *term, uint16_t x, uint16_t y);
 int tn_term_pos_store(tn_term_t *term);
 int tn_term_pos_restore(tn_term_t *term);
-int tn_term_pos_up(tn_term_t *term, int count);
-int tn_term_pos_down(tn_term_t *term, int count);
-int tn_term_pos_right(tn_term_t *term, int count);
-int tn_term_pos_left(tn_term_t *term, int count);
+int tn_term_pos_up(tn_term_t *term, uint16_t count);
+int tn_term_pos_down(tn_term_t *term, uint16_t count);
+int tn_term_pos_right(tn_term_t *term, uint16_t count);
+int tn_term_pos_left(tn_term_t *term, uint16_t count);
 
 int tn_term_write(tn_term_t *term, const char *fmt, ...);
 void tn_term_flush(tn_term_t *term);
 
 void tn_term_flush(tn_term_t *term);
 int tn_term_color_set(tn_term_t *term, uint8_t color);
-uint8_t tn_term_color16(tn_term_t *term, uint8_t color);
+int tn_term_bgcolor_set(tn_term_t *term, enum tn_term_color color);
+uint8_t tn_term_color16(tn_term_t *term, enum tn_term_color color);
 uint8_t tn_term_color256(tn_term_t *term, uint8_t r, uint8_t g, uint8_t b);
 uint8_t tn_term_grey24(tn_term_t *term, uint8_t grey);
 

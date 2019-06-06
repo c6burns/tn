@@ -255,7 +255,7 @@ int tn_term_csi_handle(tn_term_t *term, const struct tn_term_csi *csi)
 	case 'R':
 		term->pos_last.y = csi->param[0];
 		term->pos_last.x = csi->param[1];
-		tn_term_write_direct(term, "[%d,%d]", term->pos_last.x, term->pos_last.y);
+		if (term->debug_print) tn_term_write_direct(term, "[%d,%d]", term->pos_last.x, term->pos_last.y);
 		break;
 	case '~':
 		switch (csi->param[0]) {
@@ -467,6 +467,7 @@ void on_term_signal_cb(uv_signal_t *handle, int signum)
 		tn_term_t *term = handle->data;
 		tn_term_priv_t *priv = term->priv;
 		uv_tty_get_winsize(&priv->uv_tty_out, &term->size.x, &term->size.y);
+		if (term->cb_resize) term->cb_resize(term->size.x, term->size.y);
 	}
 }
 
@@ -497,7 +498,7 @@ void run_term_thread_io(void *data)
 	priv->uv_signal.data = term;
 
 	uv_timer_init(&priv->uv_loop, &priv->uv_timer_tty);
-	uv_timer_start(&priv->uv_timer_tty, on_term_timer_cb, 50, 50);
+	uv_timer_start(&priv->uv_timer_tty, on_term_timer_cb, 10, 10);
 	priv->uv_timer_tty.data = term;
 
 	priv->ttyin_fd = 0;
@@ -515,6 +516,7 @@ void run_term_thread_io(void *data)
 	priv->uv_tty_out.data = term;
 
 	TN_GUARD_CLEANUP(uv_tty_get_winsize(&priv->uv_tty_out, &term->size.x, &term->size.y));
+	if (term->cb_resize) term->cb_resize(term->size.x, term->size.y);
 
 	TN_GUARD_CLEANUP(uv_tty_set_mode(&priv->uv_tty_in, UV_TTY_MODE_RAW));
 	TN_GUARD_CLEANUP(uv_read_start((uv_stream_t *)&priv->uv_tty_in, on_term_alloc_cb, on_term_read_cb));
@@ -711,25 +713,25 @@ int tn_term_pos_restore(tn_term_t *term)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_term_pos_up(tn_term_t *term, int count)
+int tn_term_pos_up(tn_term_t *term, uint16_t count)
 {
 	return tn_term_write(term, "\033[%dA", count ? count : 1);
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_term_pos_down(tn_term_t *term, int count)
+int tn_term_pos_down(tn_term_t *term, uint16_t count)
 {
 	return tn_term_write(term, "\033[%dB", count ? count : 1);
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_term_pos_right(tn_term_t *term, int count)
+int tn_term_pos_right(tn_term_t *term, uint16_t count)
 {
 	return tn_term_write(term, "\033[%dC", count ? count : 1);
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_term_pos_left(tn_term_t *term, int count)
+int tn_term_pos_left(tn_term_t *term, uint16_t count)
 {
 	return tn_term_write(term, "\033[%dD", count ? count : 1);
 }
@@ -746,6 +748,8 @@ int tn_term_write(tn_term_t *term, const char *fmt, ...)
 	va_start(args, fmt);
 	term_buf->len = vsnprintf(term_buf->buf, TN_TERM_MAX_LINE, fmt, args);
 	va_end(args);
+
+	if (!term_buf->len) return TN_SUCCESS;
 
 	term_buf->batch_id = term->batch_request_cache;
 
@@ -764,13 +768,13 @@ void tn_term_flush(tn_term_t *term)
 // --------------------------------------------------------------------------------------------------------------
 int tn_term_color_set(tn_term_t *term, uint8_t color)
 {
-	return tn_term_write(term, "\03338;5;%dm", color);
+	return tn_term_write(term, "\033[38;5;%dm", color);
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_term_bgcolor_set(tn_term_t *term, enum tn_term_color color)
+int tn_term_bgcolor_set(tn_term_t *term, uint8_t color)
 {
-	return tn_term_write(term, "\03348;5;%dm", color);
+	return tn_term_write(term, "\033[48;5;%dm", color);
 }
 
 // --------------------------------------------------------------------------------------------------------------

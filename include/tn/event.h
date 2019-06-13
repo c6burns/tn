@@ -55,7 +55,7 @@ typedef struct tn_event_error_s {
 typedef struct tn_event_client_open_s {
 	TN_EVENT_FIELDS
 	uint64_t client_id;
-	char host[64];
+	tn_endpoint_t host;
 	uint16_t port;
 	uint8_t client_type;
 } tn_event_client_open_t;

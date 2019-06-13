@@ -1,5 +1,6 @@
 #include "tn/test_harness.h"
 #include "tn/event.h"
+#include "tn/endpoint.h"
 
 #include <string.h>
 
@@ -9,6 +10,8 @@ TN_TEST_CASE_BEGIN(test_event_list)
 	tn_event_client_open_t *evt_open;
 	tn_event_client_open_t *evt_open2;
 	uint64_t max_size = TN_EVENT_MAX_SIZE;
+	char ipstr[255];
+	uint16_t port;
 
 	// test that our sizes are correct (since we pass these to managed)
 	ASSERT_TRUE(sizeof(tn_event_base_t) == max_size);
@@ -24,8 +27,7 @@ TN_TEST_CASE_BEGIN(test_event_list)
 	ASSERT_SUCCESS(tn_event_list_setup(&event_list, 100));
 	ASSERT_SUCCESS(tn_event_list_free_pop_open(&event_list, &evt_open));
 	evt_open->client_id = 874;
-	evt_open->port = 65432;
-	strcpy(evt_open->host, "123.456.789.101");
+	ASSERT_SUCCESS(tn_endpoint_set_ip4(&evt_open->host, "123.56.89.101", 65432));
 
 	ASSERT_TRUE(tn_queue_spsc_count(&event_list.tn_events_free) == event_list.tn_events_free.capacity - 1);
 	ASSERT_TRUE(tn_queue_spsc_count(&event_list.tn_events_ready) == 0);
@@ -39,8 +41,9 @@ TN_TEST_CASE_BEGIN(test_event_list)
 	evt_open2 = (tn_event_client_open_t *)evt;
 	ASSERT_TRUE(evt_open2->type == TN_EVENT_CLIENT_OPEN);
 	ASSERT_TRUE(evt_open2->client_id == 874);
-	ASSERT_TRUE(evt_open2->port == 65432);
-	ASSERT_SUCCESS(strcmp(evt_open2->host, "123.456.789.101"));
+	ASSERT_SUCCESS(tn_endpoint_get(&evt_open2->host, &port, ipstr, sizeof(ipstr)));
+	ASSERT_TRUE(port == 65432);
+	ASSERT_SUCCESS(strcmp(ipstr, "123.56.89.101"));
 
 	ASSERT_TRUE(tn_queue_spsc_count(&event_list.tn_events_free) == event_list.tn_events_free.capacity - 1);
 	ASSERT_TRUE(tn_queue_spsc_count(&event_list.tn_events_ready) == 1);

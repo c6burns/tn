@@ -8,17 +8,17 @@
 #include "aws/common/hash_table.h"
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_endpoint_is_ipv4(const tn_endpoint_t *endpoint)
+bool tn_endpoint_is_ipv4(const tn_endpoint_t *endpoint)
 {
 	TN_ASSERT(endpoint);
-	return (endpoint->type == TN_ENDPOINT_TYPE_IPV4);
+	return (endpoint->addr4.family == AF_INET);
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_endpoint_is_ipv6(const tn_endpoint_t *endpoint)
+bool tn_endpoint_is_ipv6(const tn_endpoint_t *endpoint)
 {
 	TN_ASSERT(endpoint);
-	return (endpoint->type == TN_ENDPOINT_TYPE_IPV6);
+	return (endpoint->addr6.family == AF_INET6);
 }
 
 // --------------------------------------------------------------------------------------------------------------
@@ -27,20 +27,18 @@ int tn_endpoint_get(tn_endpoint_t *endpoint, uint16_t *port, char *buf, int buf_
 	TN_ASSERT(endpoint);
 	TN_ASSERT(port);
 	TN_ASSERT(buf);
-
 	*port = 0;
 	memset(buf, 0, buf_len);
 
 	char ipbuf[255];
 	memset(ipbuf, 0, 255);
 
-	const struct sockaddr_storage *sockaddr = (struct sockaddr_storage *)&endpoint->sockaddr;
-	if (sockaddr->ss_family == AF_INET6) {
-		struct sockaddr_in6 *sa = (struct sockaddr_in6 *)sockaddr;
+	struct sockaddr_in6 *sa = (struct sockaddr_in6 *)endpoint;
+	if (tn_endpoint_is_ipv6(endpoint)) {
 		uv_ip6_name(sa, ipbuf, 255);
 		*port = ntohs(sa->sin6_port);
-	} else if (sockaddr->ss_family == AF_INET) {
-		struct sockaddr_in *sa = (struct sockaddr_in *)sockaddr;
+	} else if (tn_endpoint_is_ipv4(endpoint)) {
+		struct sockaddr_in *sa = (struct sockaddr_in *)endpoint;
 		uv_ip4_name(sa, ipbuf, 255);
 		*port = ntohs(sa->sin_port);
 	} else {
@@ -75,8 +73,7 @@ int tn_endpoint_set_ip4(tn_endpoint_t *endpoint, const char *ip, uint16_t port)
 	if (!ip) return TN_ERROR;
 
 	memset(endpoint, 0, sizeof(*endpoint));
-	if ((ret = uv_ip4_addr(ip, port, (struct sockaddr_in *)&endpoint->sockaddr))) return TN_ERROR;
-	endpoint->type = TN_ENDPOINT_TYPE_IPV4;
+	if ((ret = uv_ip4_addr(ip, port, (struct sockaddr_in *)endpoint))) return TN_ERROR;
 
 	return TN_SUCCESS;
 }
@@ -93,8 +90,7 @@ int tn_endpoint_set_ip6(tn_endpoint_t *endpoint, const char *ip, uint16_t port)
 	if (!ip) return TN_ERROR;
 
 	memset(endpoint, 0, sizeof(*endpoint));
-	if ((ret = uv_ip6_addr(ip, port, (struct sockaddr_in6 *)&endpoint->sockaddr))) return TN_ERROR;
-	endpoint->type = TN_ENDPOINT_TYPE_IPV6;
+	if ((ret = uv_ip6_addr(ip, port, (struct sockaddr_in6 *)endpoint))) return TN_ERROR;
 
 	return TN_SUCCESS;
 }
@@ -109,11 +105,9 @@ int tn_endpoint_convert_from(tn_endpoint_t *endpoint, void *sockaddr_void)
 
 	memset(endpoint, 0, sizeof(*endpoint));
 	if (sockaddr->ss_family == AF_INET6) {
-		memcpy(&endpoint->sockaddr, (struct sockaddr_in6 *)sockaddr, sizeof(struct sockaddr_in6));
-		endpoint->type = TN_ENDPOINT_TYPE_IPV6;
+		memcpy(endpoint, (struct sockaddr_in6 *)sockaddr, sizeof(struct sockaddr_in6));
 	} else if (sockaddr->ss_family == AF_INET) {
-		memcpy(&endpoint->sockaddr, (struct sockaddr_in *)sockaddr, sizeof(struct sockaddr_in));
-		endpoint->type = TN_ENDPOINT_TYPE_IPV4;
+		memcpy(endpoint, (struct sockaddr_in *)sockaddr, sizeof(struct sockaddr_in));
 	} else {
 		return TN_ERROR;
 	}
@@ -122,25 +116,25 @@ int tn_endpoint_convert_from(tn_endpoint_t *endpoint, void *sockaddr_void)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_endpoint_equal_addr(tn_endpoint_t *endpoint, void *sockaddr_storage)
+bool tn_endpoint_equal_addr(tn_endpoint_t *endpoint, void *sockaddr_storage)
 {
 	tn_sockaddr_storage_t *addr = sockaddr_storage;
-	if (addr->family != endpoint->sockaddr.family) return 0;
+	if (addr->family != endpoint->addr4.family) return false;
 
 	if (addr->family == AF_INET6) {
-		struct sockaddr_in6 *ep_addr6 = (struct sockaddr_in6 *)&endpoint->sockaddr;
+		struct sockaddr_in6 *ep_addr6 = (struct sockaddr_in6 *)endpoint;
 		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)addr;
-		if (memcmp(&endpoint->sockaddr, addr, sizeof(struct sockaddr_in6))) return 0;
-		return 1;
+		if (memcmp(endpoint, addr, sizeof(struct sockaddr_in6))) return false;
+		return true;
 	} else if (addr->family == AF_INET) {
-		tn_sockaddr4_t *ep_addr4 = (tn_sockaddr4_t *)&endpoint->sockaddr;
+		tn_sockaddr4_t *ep_addr4 = (tn_sockaddr4_t *)endpoint;
 		tn_sockaddr4_t *addr4 = (tn_sockaddr4_t *)addr;
-		if (addr4->addr != ep_addr4->addr) return 0;
-		if (addr4->port != ep_addr4->port) return 0;
-		return 1;
+		if (addr4->addr != ep_addr4->addr) return false;
+		if (addr4->port != ep_addr4->port) return false;
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 
 // --------------------------------------------------------------------------------------------------------------
@@ -149,13 +143,14 @@ int tn_endpoint_get_hash(tn_endpoint_t *endpoint, uint64_t *out_hash)
 	TN_ASSERT(out_hash);
 
 	*out_hash = 0;
-	if (endpoint->sockaddr.family == AF_INET6) {
-		struct aws_byte_cursor bc = aws_byte_cursor_from_array(&endpoint->sockaddr, sizeof(struct sockaddr_in6));
+	if (endpoint->addr6.family == AF_INET6) {
+		struct aws_byte_cursor bc = aws_byte_cursor_from_array(endpoint, sizeof(*endpoint));
 		*out_hash = aws_hash_byte_cursor_ptr(&bc);
 		return TN_SUCCESS;
-	} else if (endpoint->sockaddr.family == AF_INET) {
-		tn_sockaddr4_t *addr = (tn_sockaddr4_t *)&endpoint->sockaddr;
-		*out_hash = 0x0000ffffffffffffULL & ((addr->port << sizeof(uint32_t)) | addr->addr);
+	} else if (endpoint->addr4.family == AF_INET) {
+		*out_hash = 0x0000000000000000ULL & endpoint->addr4.port;
+		*out_hash <<= 32;
+		*out_hash |= endpoint->addr4.addr;
 		return TN_SUCCESS;
 	}
 

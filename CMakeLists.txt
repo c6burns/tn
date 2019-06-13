@@ -178,6 +178,7 @@ target_compile_definitions(tn-tests PRIVATE ${TN_TARGET_COMPILE_DEFS})
 
 # runner for single test for easy debug step through an impl issue
 #tn_test_single(test_event test_events "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
+#tn_test_single(test_endpoint test_endpoints "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
 
 
 set(TN_INCLUDE_DIRS ${TN_INCLUDE_DIRS} PARENT_SCOPE)

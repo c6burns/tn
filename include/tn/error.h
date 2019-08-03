@@ -76,14 +76,14 @@
 #   error "Unknown compiler"
 #endif
 
-
-#if defined(__CYGWIN32__) || defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WINAPI_FAMILY)
-#	define TN_CONVENTION __cdecl
-#	define TN_EXPORT __declspec(dllexport)
-#else
-#	define TN_CONVENTION 
-#	define TN_EXPORT 
+#ifdef TN_EXPORTING
+#	if defined(__CYGWIN32__) || defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WINAPI_FAMILY)
+#		define TN_CONVENTION __cdecl
+#		define TN_EXPORT __declspec(dllexport)
+#	else
+#		define TN_CONVENTION
+#		define TN_EXPORT
+#	endif
 #endif
-
 
 #endif

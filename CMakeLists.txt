@@ -145,6 +145,7 @@ set(TN_LIBRARY_SRCS
 add_library(tn STATIC ${TN_LIBRARY_SRCS})
 target_link_libraries(tn ${TN_LIBRARIES})
 target_compile_definitions(tn PRIVATE ${TN_TARGET_COMPILE_DEFS})
+target_compile_definitions(tn PRIVATE -DTN_EXPORTING)
 list(APPEND TN_LIBRARIES tn)
 
 

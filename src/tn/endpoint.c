@@ -22,6 +22,13 @@ bool tn_endpoint_is_ipv6(const tn_endpoint_t *endpoint)
 }
 
 // --------------------------------------------------------------------------------------------------------------
+bool tn_endpoint_af_get(const tn_endpoint_t *endpoint)
+{
+	TN_ASSERT(endpoint);
+	return endpoint->addr4.family;
+}
+
+// --------------------------------------------------------------------------------------------------------------
 int tn_endpoint_get(tn_endpoint_t *endpoint, uint16_t *port, char *buf, int buf_len)
 {
 	TN_ASSERT(endpoint);
@@ -116,17 +123,17 @@ int tn_endpoint_convert_from(tn_endpoint_t *endpoint, void *sockaddr_void)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-bool tn_endpoint_equal_addr(tn_endpoint_t *endpoint, void *sockaddr_storage)
+bool tn_endpoint_equal_addr(tn_endpoint_t *endpoint, void *sockaddr)
 {
-	tn_sockaddr_storage_t *addr = sockaddr_storage;
-	if (addr->family != endpoint->addr4.family) return false;
+	tn_endpoint_t *addr = (tn_endpoint_t *)sockaddr;
+	if (tn_endpoint_af_get(addr) != tn_endpoint_af_get(endpoint)) return false;
 
-	if (addr->family == AF_INET6) {
+	if (tn_endpoint_is_ipv4(addr)) {
 		struct sockaddr_in6 *ep_addr6 = (struct sockaddr_in6 *)endpoint;
 		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)addr;
 		if (memcmp(endpoint, addr, sizeof(struct sockaddr_in6))) return false;
 		return true;
-	} else if (addr->family == AF_INET) {
+	} else if (tn_endpoint_is_ipv6(addr)) {
 		tn_sockaddr4_t *ep_addr4 = (tn_sockaddr4_t *)endpoint;
 		tn_sockaddr4_t *addr4 = (tn_sockaddr4_t *)addr;
 		if (addr4->addr != ep_addr4->addr) return false;

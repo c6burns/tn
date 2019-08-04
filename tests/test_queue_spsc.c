@@ -22,9 +22,9 @@ void consume_spsc_thread_run(void *priv)
 	uint64_t i, count;
 	tn_queue_spsc_t *queue = priv;
 
-	const uint64_t capacity = 100000;
+	const size_t capacity = 100000;
 	const uint16_t block_size = sizeof(void *);
-	const uint64_t capacity_bytes = block_size * capacity;
+	const size_t capacity_bytes = block_size * capacity;
 
 	uint64_t *num = TN_MEM_ACQUIRE(capacity_bytes);
 

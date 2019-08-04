@@ -12,7 +12,7 @@ TN_TEST_CASE_BEGIN(test_buffer)
 	tn_buffer_pool_cleanup(&pool);
 
 	ASSERT_SUCCESS(tn_buffer_pool_setup(&pool, blocks, 8));
-	for (int i = 0; i < blocks; i++) {
+	for (size_t i = 0; i < blocks; i++) {
 		ASSERT_SUCCESS(tn_buffer_pool_pop(&pool));
 	}
 	ASSERT_TRUE(0 != tn_buffer_pool_pop(&pool));

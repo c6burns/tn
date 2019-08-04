@@ -155,7 +155,7 @@ void tn_term_flush(tn_term_t *term);
 
 void tn_term_flush(tn_term_t *term);
 int tn_term_color_set(tn_term_t *term, uint8_t color);
-int tn_term_bgcolor_set(tn_term_t *term, enum tn_term_color color);
+int tn_term_bgcolor_set(tn_term_t *term, uint8_t color);
 uint8_t tn_term_color16(tn_term_t *term, enum tn_term_color color);
 uint8_t tn_term_color256(tn_term_t *term, uint8_t r, uint8_t g, uint8_t b);
 uint8_t tn_term_grey24(tn_term_t *term, uint8_t grey);

@@ -778,7 +778,7 @@ int tn_term_bgcolor_set(tn_term_t *term, uint8_t color)
 // --------------------------------------------------------------------------------------------------------------
 uint8_t tn_term_color16(tn_term_t *term, enum tn_term_color color)
 {
-    return (color > 15) ? 15 : color;
+    return (color > 0xff) ? 0xff : color;
 }
 
 // --------------------------------------------------------------------------------------------------------------

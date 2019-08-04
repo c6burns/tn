@@ -38,7 +38,6 @@ else()
 	endif()
 endif()
 
-
 #
 # argparse dependency
 #list(APPEND TN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/argparse)
@@ -46,9 +45,12 @@ endif()
 #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/argparse)
 #list(APPEND TN_LIBRARIES argparse)
 
-
 #
 # aws-c-common dependency
+set(BUILD_TESTING ON CACHE BOOL "" FORCE)
+set(STATIC_CRT ON CACHE BOOL "" FORCE)
+mark_as_advanced(FORCE BUILD_TESTING STATIC_CRT)
+
 if(NOT EXISTS ${TN_DEPS_DIR}/aws-c-common)
 	execute_process(COMMAND git clone https://github.com/c6burns/aws-c-common WORKING_DIRECTORY ${TN_DEPS_DIR})
 endif()
@@ -70,9 +72,10 @@ add_dependencies(aws-c-common aws-c-common_update)
 list(APPEND TN_LIBRARIES aws-c-common)
 set(CMAKE_PROJECT_NAME ${ORIG_CMAKE_PROJECT_NAME})
 
-
 #
 # libuv dependency
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
 if(NOT EXISTS ${TN_DEPS_DIR}/libuv)
 	execute_process(COMMAND git clone https://github.com/c6burns/libuv WORKING_DIRECTORY ${TN_DEPS_DIR})
 endif()
@@ -88,7 +91,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv)
 add_dependencies(uv_a libuv_update)
 list(APPEND TN_LIBRARIES uv_a)
-
 
 #
 # build tn library
@@ -148,7 +150,6 @@ target_compile_definitions(tn PRIVATE ${TN_TARGET_COMPILE_DEFS})
 target_compile_definitions(tn PRIVATE -DTN_EXPORTING)
 list(APPEND TN_LIBRARIES tn)
 
-
 #
 # build tn test executables
 set(TN_TESTS_C
@@ -180,7 +181,6 @@ target_compile_definitions(tn-tests PRIVATE ${TN_TARGET_COMPILE_DEFS})
 # runner for single test for easy debug step through an impl issue
 #tn_test_single(test_event test_events "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
 #tn_test_single(test_endpoint test_endpoints "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
-
 
 set(TN_INCLUDE_DIRS ${TN_INCLUDE_DIRS} PARENT_SCOPE)
 set(TN_LIBRARIES ${TN_LIBRARIES} PARENT_SCOPE)

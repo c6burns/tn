@@ -39,6 +39,7 @@
 
 #define TN_CLIENT_ECONN -500
 
+#define TN_STATIC_ASSERT(cond) AWS_STATIC_ASSERT(cond)
 #define TN_ASSERT(expr) assert(expr)
 #define TN_GUARD(expr) \
     if ((expr)) return TN_ERROR

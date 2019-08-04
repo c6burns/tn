@@ -11,39 +11,37 @@
 #define TN_MEM_1G TN_MEM_1M * 1024
 
 #if TN_MEM_DEBUG
-#	define TN_MEM_ACQUIRE(sz) aws_mem_acquire(&tn_aws_default_allocator, sz, __FILENAME__, __LINE__, __FUNCTION__); 
-#	define TN_MEM_RELEASE(ptr) aws_mem_release(&tn_aws_default_allocator, ptr, __FILENAME__, __LINE__, __FUNCTION__);
+#    define TN_MEM_ACQUIRE(sz) aws_mem_acquire(&tn_aws_default_allocator, sz, __FILENAME__, __LINE__, __FUNCTION__);
+#    define TN_MEM_RELEASE(ptr) aws_mem_release(&tn_aws_default_allocator, ptr, __FILENAME__, __LINE__, __FUNCTION__);
 #else
-#	define TN_MEM_ACQUIRE(sz) tn_allocator_acquire(&tn_default_allocator, sz)
-#	define TN_MEM_RELEASE(ptr) tn_allocator_release(&tn_default_allocator, ptr)
-#	define TN_MEM_RELEASE_PTR(ptr) tn_allocator_release_ptr(&tn_default_allocator, ptr)
+#    define TN_MEM_ACQUIRE(sz) tn_allocator_acquire(&tn_default_allocator, sz)
+#    define TN_MEM_RELEASE(ptr) tn_allocator_release(&tn_default_allocator, ptr)
+#    define TN_MEM_RELEASE_PTR(ptr) tn_allocator_release_ptr(&tn_default_allocator, ptr)
 #endif
 
-
 typedef struct tn_allocator_config_s {
-	void *priv;
+    void *priv;
 } tn_allocator_config_t;
 
 struct tn_allocator_s;
 #if TN_MEM_DEBUG
 typedef void *(*tn_allocator_aquire_fn)(const struct tn_allocator_s *allocator, size_t sz, const char *file_name, const int line, const char *function_name);
-typedef void(*tn_allocator_release_fn)(const struct tn_allocator_s *allocator, void *ptr, const char *file_name, const int line, const char *function_name);
-typedef void(*tn_allocator_release_ptr_fn)(const struct tn_allocator_s *allocator, void **ptr, const char *file_name, const int line, const char *function_name);
+typedef void (*tn_allocator_release_fn)(const struct tn_allocator_s *allocator, void *ptr, const char *file_name, const int line, const char *function_name);
+typedef void (*tn_allocator_release_ptr_fn)(const struct tn_allocator_s *allocator, void **ptr, const char *file_name, const int line, const char *function_name);
 #else
 typedef void *(*tn_allocator_aquire_fn)(const struct tn_allocator_s *allocator, size_t sz);
-typedef void(*tn_allocator_release_fn)(const struct tn_allocator_s *allocator, void *ptr);
-typedef void(*tn_allocator_release_ptr_fn)(const struct tn_allocator_s *allocator, void **ptr);
+typedef void (*tn_allocator_release_fn)(const struct tn_allocator_s *allocator, void *ptr);
+typedef void (*tn_allocator_release_ptr_fn)(const struct tn_allocator_s *allocator, void **ptr);
 #endif
 
 typedef struct aws_allocator aws_allocator_t;
 typedef struct tn_allocator_s {
-	tn_allocator_aquire_fn acquire_fn;
-	tn_allocator_release_fn release_fn;
-	tn_allocator_release_ptr_fn release_ptr_fn;
-	tn_allocator_config_t config;
-	void *priv;
+    tn_allocator_aquire_fn acquire_fn;
+    tn_allocator_release_fn release_fn;
+    tn_allocator_release_ptr_fn release_ptr_fn;
+    tn_allocator_config_t config;
+    void *priv;
 } tn_allocator_t;
-
 
 tn_allocator_t *tn_allocator_new(void);
 void tn_allocator_delete(tn_allocator_t **ptr_allocator);

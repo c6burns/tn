@@ -1,15 +1,16 @@
 #ifndef TN_ATOMIC_H
 #define TN_ATOMIC_H
 
-
 #include <stdint.h>
 
-#define TN_ATOMIC_INIT(x) { .value = (void *)(uintptr_t)(x) }
+#define TN_ATOMIC_INIT(x)               \
+    {                                   \
+        .value = (void *)(uintptr_t)(x) \
+    }
 
 typedef struct tn_atomic_s {
-	void *value;
+    void *value;
 } tn_atomic_t;
-
 
 // atomic memory barriers
 #define TN_ATOMIC_RELAXED 0
@@ -17,7 +18,6 @@ typedef struct tn_atomic_s {
 #define TN_ATOMIC_RELEASE 3
 #define TN_ATOMIC_ACQ_REL 4
 #define TN_ATOMIC_SEQ_CST 5
-
 
 uint64_t tn_atomic_load(const volatile tn_atomic_t *a);
 uint64_t tn_atomic_load_explicit(const volatile tn_atomic_t *a, int mem_order);

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 typedef struct tn_uuid_s {
-	uint8_t uuid_data[16];
+    uint8_t uuid_data[16];
 } tn_uuid_t;
 
 tn_uuid_t *tn_uuid_new(void);

@@ -32,7 +32,7 @@ TN_TEST_CASE_BEGIN(test_endpoint)
     memset(&endpoint, 0, sizeof(endpoint));
     ASSERT_SUCCESS(uv_ip6_addr("1123::4567:890a:bcde", 8045, &sa6));
     ASSERT_SUCCESS(tn_endpoint_convert_from(&endpoint, &sa6));
-    \tASSERT_FALSE(tn_endpoint_is_ipv4(&endpoint));
+    ASSERT_FALSE(tn_endpoint_is_ipv4(&endpoint));
     ASSERT_TRUE(tn_endpoint_is_ipv6(&endpoint));
     ASSERT_SUCCESS(tn_endpoint_string_get(&endpoint, &port, buf, sizeof(buf)));
     ASSERT_SUCCESS(strcmp(buf, "1123::4567:890a:bcde"));

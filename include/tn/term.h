@@ -2,124 +2,125 @@
 #define TN_TERM_H
 
 #ifdef _WIN32
-#	include <io.h>
+#    include <io.h>
 #endif
 
-#include "tn/error.h"
 #include "tn/allocator.h"
 #include "tn/atomic.h"
-#include "tn/thread.h"
-#include "tn/mutex.h"
+#include "tn/error.h"
 #include "tn/list_ptr.h"
+#include "tn/mutex.h"
 #include "tn/queue_spsc.h"
-
+#include "tn/thread.h"
 
 #define TN_TERM_MAX_LINE 1024
 #define TN_TERM_BUFFER_STACK_SIZE 1024
-#define TN_TERM_INIT { .priv = NULL, .state = TN_ATOMIC_INIT(TN_TERM_STATE_NEW), }
+#define TN_TERM_INIT                                              \
+    {                                                             \
+        .priv = NULL, .state = TN_ATOMIC_INIT(TN_TERM_STATE_NEW), \
+    }
 
 enum tn_term_key {
-	TN_TERM_KEY_NONE,
-	TN_TERM_KEY_F1,
-	TN_TERM_KEY_F2,
-	TN_TERM_KEY_F3,
-	TN_TERM_KEY_F4,
-	TN_TERM_KEY_F5,
-	TN_TERM_KEY_F6,
-	TN_TERM_KEY_F7,
-	TN_TERM_KEY_F8,
-	TN_TERM_KEY_F9,
-	TN_TERM_KEY_F10,
-	TN_TERM_KEY_F11,
-	TN_TERM_KEY_F12,
-	TN_TERM_KEY_HOME,
-	TN_TERM_KEY_END,
-	TN_TERM_KEY_INSERT,
-	TN_TERM_KEY_DELETE,
-	TN_TERM_KEY_BACKSPACE,
-	TN_TERM_KEY_UP,
-	TN_TERM_KEY_DOWN,
-	TN_TERM_KEY_RIGHT,
-	TN_TERM_KEY_LEFT,
-	TN_TERM_KEY_TAB,
-	TN_TERM_KEY_ESC,
-	TN_TERM_KEY_BREAK,
-	TN_TERM_KEY_ENTER,
-	TN_TERM_KEY_INVALID,
+    TN_TERM_KEY_NONE,
+    TN_TERM_KEY_F1,
+    TN_TERM_KEY_F2,
+    TN_TERM_KEY_F3,
+    TN_TERM_KEY_F4,
+    TN_TERM_KEY_F5,
+    TN_TERM_KEY_F6,
+    TN_TERM_KEY_F7,
+    TN_TERM_KEY_F8,
+    TN_TERM_KEY_F9,
+    TN_TERM_KEY_F10,
+    TN_TERM_KEY_F11,
+    TN_TERM_KEY_F12,
+    TN_TERM_KEY_HOME,
+    TN_TERM_KEY_END,
+    TN_TERM_KEY_INSERT,
+    TN_TERM_KEY_DELETE,
+    TN_TERM_KEY_BACKSPACE,
+    TN_TERM_KEY_UP,
+    TN_TERM_KEY_DOWN,
+    TN_TERM_KEY_RIGHT,
+    TN_TERM_KEY_LEFT,
+    TN_TERM_KEY_TAB,
+    TN_TERM_KEY_ESC,
+    TN_TERM_KEY_BREAK,
+    TN_TERM_KEY_ENTER,
+    TN_TERM_KEY_INVALID,
 };
 
 enum tn_term_color {
-	TN_TERM_COLOR_BLACK,
-	TN_TERM_COLOR_RED_DARK,
-	TN_TERM_COLOR_GREEN_DARK,
-	TN_TERM_COLOR_YELLOW_DARK,
-	TN_TERM_COLOR_BLUE_DARK,
-	TN_TERM_COLOR_PURPLE_DARK,
-	TN_TERM_COLOR_AQUA_DARK,
-	TN_TERM_COLOR_GREY_BRIGHT,
-	TN_TERM_COLOR_GREY_DARK,
-	TN_TERM_COLOR_RED_BRIGHT,
-	TN_TERM_COLOR_GREEN_BRIGHT,
-	TN_TERM_COLOR_YELLOW_BRIGHT,
-	TN_TERM_COLOR_BLUE_BRIGHT,
-	TN_TERM_COLOR_PURPLE_BRIGHT,
-	TN_TERM_COLOR_AQUA_BRIGHT,
-	TN_TERM_COLOR_WHITE,
+    TN_TERM_COLOR_BLACK,
+    TN_TERM_COLOR_RED_DARK,
+    TN_TERM_COLOR_GREEN_DARK,
+    TN_TERM_COLOR_YELLOW_DARK,
+    TN_TERM_COLOR_BLUE_DARK,
+    TN_TERM_COLOR_PURPLE_DARK,
+    TN_TERM_COLOR_AQUA_DARK,
+    TN_TERM_COLOR_GREY_BRIGHT,
+    TN_TERM_COLOR_GREY_DARK,
+    TN_TERM_COLOR_RED_BRIGHT,
+    TN_TERM_COLOR_GREEN_BRIGHT,
+    TN_TERM_COLOR_YELLOW_BRIGHT,
+    TN_TERM_COLOR_BLUE_BRIGHT,
+    TN_TERM_COLOR_PURPLE_BRIGHT,
+    TN_TERM_COLOR_AQUA_BRIGHT,
+    TN_TERM_COLOR_WHITE,
 };
 
 typedef enum tn_term_state_e {
-	TN_TERM_STATE_NEW,
+    TN_TERM_STATE_NEW,
     TN_TERM_STATE_STARTING,
-	TN_TERM_STATE_STARTED,
-	TN_TERM_STATE_STOPPING,
-	TN_TERM_STATE_STOPPED,
+    TN_TERM_STATE_STARTED,
+    TN_TERM_STATE_STOPPING,
+    TN_TERM_STATE_STOPPED,
     TN_TERM_STATE_ERROR,
     TN_TERM_STATE_INVALID,
 } tn_term_state_t;
 
 struct tn_term_pos {
-	int x;
-	int y;
+    int x;
+    int y;
 };
 
 struct tn_term_csi {
-	char seq_end;
-	int seq_len;
-	int param_count;
-	int param[8];
-	int open_count;
-	char shift_char;
+    char seq_end;
+    int seq_len;
+    int param_count;
+    int param[8];
+    int open_count;
+    char shift_char;
 };
 
 struct tn_term_buf {
-	char buf[TN_TERM_MAX_LINE];
-	uint32_t len;
-	uint64_t batch_id;
+    char buf[TN_TERM_MAX_LINE];
+    uint32_t len;
+    uint64_t batch_id;
 };
 
-typedef void(*tn_term_callback_char_func)(char in_char);
-typedef void(*tn_term_callback_key_func)(enum tn_term_key key);
-typedef void(*tn_term_callback_resize_func)(uint16_t x, uint16_t y);
+typedef void (*tn_term_callback_char_func)(char in_char);
+typedef void (*tn_term_callback_key_func)(enum tn_term_key key);
+typedef void (*tn_term_callback_resize_func)(uint16_t x, uint16_t y);
 
 typedef struct tn_term_s {
-	void *priv;
-	tn_queue_spsc_t buffer_queue;
-	tn_list_ptr_t buffer_stack;
-	struct tn_term_buf *buffer_pool;
-	tn_term_callback_char_func cb_char;
-	tn_term_callback_key_func cb_key;
-	tn_term_callback_resize_func cb_resize;
-	tn_thread_t thread_io;
-	tn_mutex_t mtx;
-	tn_atomic_t state;
-	tn_atomic_t batch_id;
-	uint64_t batch_request_cache;
-	uint64_t batch_process_cache;
-	struct tn_term_pos size;
-	struct tn_term_pos pos_last;
-	int debug_print;
+    void *priv;
+    tn_queue_spsc_t buffer_queue;
+    tn_list_ptr_t buffer_stack;
+    struct tn_term_buf *buffer_pool;
+    tn_term_callback_char_func cb_char;
+    tn_term_callback_key_func cb_key;
+    tn_term_callback_resize_func cb_resize;
+    tn_thread_t thread_io;
+    tn_mutex_t mtx;
+    tn_atomic_t state;
+    tn_atomic_t batch_id;
+    uint64_t batch_request_cache;
+    uint64_t batch_process_cache;
+    struct tn_term_pos size;
+    struct tn_term_pos pos_last;
+    int debug_print;
 } tn_term_t;
-
 
 int tn_term_setup(tn_term_t *term);
 void tn_term_cleanup(tn_term_t *term);

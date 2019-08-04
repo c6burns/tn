@@ -7,7 +7,7 @@
 #include "tn/endpoint.h"
 #include "tn/queue_spsc.h"
 
-#define TN_EVENT_MAX_SIZE 128
+#define TN_EVENT_MAX_SIZE 64
 #define TN_EVENT_PAD_SIZE (TN_EVENT_MAX_SIZE) - sizeof(uint32_t) - sizeof(uint32_t)
 
 #define TN_EVENT_FIELDS \
@@ -46,7 +46,6 @@ typedef struct tn_event_error_s {
     TN_EVENT_FIELDS
     uint64_t client_id;
     int32_t error_code;
-    char error_string[TN_EVENT_PAD_SIZE - sizeof(uint64_t) - sizeof(tn_buffer_t *) - sizeof(int32_t)];
 } tn_event_error_t;
 
 // client connected
@@ -54,7 +53,6 @@ typedef struct tn_event_client_open_s {
     TN_EVENT_FIELDS
     uint64_t client_id;
     tn_endpoint_t host;
-    uint16_t port;
     uint8_t client_type;
 } tn_event_client_open_t;
 
@@ -62,9 +60,7 @@ typedef struct tn_event_client_open_s {
 typedef struct tn_event_client_close_s {
     TN_EVENT_FIELDS
     uint64_t client_id;
-    tn_buffer_t *tn_buffer;
     int32_t error_code;
-    char error_string[TN_EVENT_PAD_SIZE - sizeof(uint64_t) - sizeof(tn_buffer_t *) - sizeof(int32_t)];
 } tn_event_client_close_t;
 
 // client recv bytes
@@ -80,17 +76,17 @@ typedef struct tn_event_client_read_s {
 // IO stats
 typedef struct tn_event_stats_s {
     TN_EVENT_FIELDS
-    uint64_t clients_total;
-    uint64_t recv_msgs;
-    uint64_t recv_bytes;
-    uint64_t send_msgs;
-    uint64_t send_bytes;
-    uint64_t events_total;
-    uint64_t events_inuse;
-    uint64_t events_free;
-    uint64_t buffers_total;
-    uint64_t buffers_inuse;
-    uint64_t buffers_free;
+    //uint64_t clients_total;
+    //uint64_t recv_msgs;
+    //uint64_t recv_bytes;
+    //uint64_t send_msgs;
+    //uint64_t send_bytes;
+    //uint64_t events_total;
+    //uint64_t events_inuse;
+    //uint64_t events_free;
+    //uint64_t buffers_total;
+    //uint64_t buffers_inuse;
+    //uint64_t buffers_free;
 } tn_event_stats_t;
 
 typedef struct tn_event_list_s {
@@ -99,6 +95,13 @@ typedef struct tn_event_list_s {
     tn_queue_spsc_t tn_events_ready;
     uint64_t capacity;
 } tn_event_list_t;
+
+TN_STATIC_ASSERT(sizeof(tn_event_base_t) == TN_EVENT_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_event_error_t) <= TN_EVENT_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_event_client_open_t) <= TN_EVENT_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_event_client_close_t) <= TN_EVENT_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_event_client_read_t) <= TN_EVENT_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_event_stats_t) <= TN_EVENT_MAX_SIZE);
 
 int tn_event_list_setup(tn_event_list_t *list, uint64_t capacity);
 void tn_event_list_cleanup(tn_event_list_t *list);

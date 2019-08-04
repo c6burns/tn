@@ -99,7 +99,6 @@ int tn_event_list_free_pop_close(tn_event_list_t *list, tn_event_client_close_t 
     *out_evt = NULL;
     TN_GUARD(tn_queue_spsc_pop_back(&list->tn_events_free, (void **)out_evt));
     (*out_evt)->type = TN_EVENT_CLIENT_CLOSE;
-    (*out_evt)->tn_buffer = NULL;
 
     return TN_SUCCESS;
 }

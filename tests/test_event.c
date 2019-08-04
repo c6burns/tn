@@ -9,17 +9,8 @@ TN_TEST_CASE_BEGIN(test_event_list)
 	tn_event_base_t *evt;
 	tn_event_client_open_t *evt_open;
 	tn_event_client_open_t *evt_open2;
-	uint64_t max_size = TN_EVENT_MAX_SIZE;
 	char ipstr[255];
 	uint16_t port;
-
-	// test that our sizes are correct (since we pass these to managed)
-	ASSERT_TRUE(sizeof(tn_event_base_t) == max_size);
-	ASSERT_TRUE(sizeof(tn_event_error_t) <= max_size);
-	ASSERT_TRUE(sizeof(tn_event_client_open_t) <= max_size);
-	ASSERT_TRUE(sizeof(tn_event_client_close_t) <= max_size);
-	ASSERT_TRUE(sizeof(tn_event_client_read_t) <= max_size);
-	ASSERT_TRUE(sizeof(tn_event_stats_t) <= max_size);
 
 	ASSERT_SUCCESS(tn_event_list_setup(&event_list, 100));
 	tn_event_list_cleanup(&event_list);

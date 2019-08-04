@@ -7,7 +7,7 @@
 #include "tn/endpoint.h"
 #include "tn/queue_spsc.h"
 
-#define TN_CMD_MAX_SIZE 128
+#define TN_CMD_MAX_SIZE 64
 #define TN_CMD_PAD_SIZE (TN_CMD_MAX_SIZE) - sizeof(uint32_t) - sizeof(uint32_t)
 
 #define TN_CMD_FIELDS \
@@ -31,8 +31,7 @@ typedef struct tn_cmd_base_s {
 typedef struct tn_cmd_client_open_s {
     TN_CMD_FIELDS
     void *priv;
-    char host[64];
-    uint16_t port;
+    tn_endpoint_t endpoint;
 } tn_cmd_client_open_t;
 
 // disconnect client
@@ -58,6 +57,11 @@ typedef struct tn_cmd_list_s {
     tn_queue_spsc_t tn_cmds_ready;
     uint64_t capacity;
 } tn_cmd_list_t;
+
+TN_STATIC_ASSERT(sizeof(tn_cmd_base_t) == TN_CMD_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_cmd_client_open_t) <= TN_CMD_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_cmd_client_close_t) <= TN_CMD_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_cmd_client_send_t) <= TN_CMD_MAX_SIZE);
 
 int tn_cmd_list_setup(tn_cmd_list_t *list, uint64_t capacity);
 void tn_cmd_list_cleanup(tn_cmd_list_t *list);

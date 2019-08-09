@@ -51,6 +51,7 @@ typedef struct tn_event_error_s {
 // client connected
 typedef struct tn_event_client_open_s {
     TN_EVENT_FIELDS
+    uint64_t cmd_id;
     uint64_t client_id;
     tn_endpoint_t host;
     uint8_t client_type;
@@ -59,6 +60,7 @@ typedef struct tn_event_client_open_s {
 // client disconnected
 typedef struct tn_event_client_close_s {
     TN_EVENT_FIELDS
+    uint64_t cmd_id;
     uint64_t client_id;
     int32_t error_code;
 } tn_event_client_close_t;

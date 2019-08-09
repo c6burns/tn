@@ -7,6 +7,7 @@
 #include "tn/endpoint.h"
 #include "tn/queue_spsc.h"
 
+#define TN_CMD_INVALID UINT64_MAX
 #define TN_CMD_MAX_SIZE 64
 #define TN_CMD_PAD_SIZE (TN_CMD_MAX_SIZE) - sizeof(uint32_t) - sizeof(uint32_t)
 

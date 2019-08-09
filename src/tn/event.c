@@ -3,6 +3,7 @@
 #include "tn/allocator.h"
 #include "tn/buffer.h"
 #include "tn/error.h"
+#include "tn/cmd.h"
 
 // --------------------------------------------------------------------------------------------------------------
 int tn_event_list_setup(tn_event_list_t *list, uint64_t capacity)
@@ -86,6 +87,7 @@ int tn_event_list_free_pop_open(tn_event_list_t *list, tn_event_client_open_t **
     *out_evt = NULL;
     TN_GUARD(tn_queue_spsc_pop_back(&list->tn_events_free, (void **)out_evt));
     (*out_evt)->type = TN_EVENT_CLIENT_OPEN;
+    (*out_evt)->cmd_id = TN_CMD_INVALID;
 
     return TN_SUCCESS;
 }
@@ -99,6 +101,7 @@ int tn_event_list_free_pop_close(tn_event_list_t *list, tn_event_client_close_t 
     *out_evt = NULL;
     TN_GUARD(tn_queue_spsc_pop_back(&list->tn_events_free, (void **)out_evt));
     (*out_evt)->type = TN_EVENT_CLIENT_CLOSE;
+    (*out_evt)->cmd_id = TN_CMD_INVALID;
 
     return TN_SUCCESS;
 }

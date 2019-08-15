@@ -100,7 +100,7 @@ int tn_buffer_read_buffer(tn_buffer_t *buffer, tn_buffer_t *dst_buffer, size_t l
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_buffer_write(tn_buffer_t *buffer, void *src_buffer, size_t len)
+int tn_buffer_write(tn_buffer_t *buffer, const void *src_buffer, size_t len)
 {
     TN_ASSERT(buffer);
     if (!aws_byte_buf_write(&buffer->buf, src_buffer, len)) return TN_ERROR;
@@ -109,7 +109,7 @@ int tn_buffer_write(tn_buffer_t *buffer, void *src_buffer, size_t len)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_buffer_write_u8(tn_buffer_t *buffer, uint8_t val)
+int tn_buffer_write_u8(tn_buffer_t *buffer, const uint8_t val)
 {
     TN_ASSERT(buffer);
     if (!aws_byte_buf_write_u8(&buffer->buf, val)) return TN_ERROR;
@@ -118,7 +118,7 @@ int tn_buffer_write_u8(tn_buffer_t *buffer, uint8_t val)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_buffer_write_be16(tn_buffer_t *buffer, uint16_t val)
+int tn_buffer_write_be16(tn_buffer_t *buffer, const uint16_t val)
 {
     TN_ASSERT(buffer);
     if (!aws_byte_buf_write_be16(&buffer->buf, val)) return TN_ERROR;
@@ -127,7 +127,7 @@ int tn_buffer_write_be16(tn_buffer_t *buffer, uint16_t val)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_buffer_write_be32(tn_buffer_t *buffer, uint32_t val)
+int tn_buffer_write_be32(tn_buffer_t *buffer, const uint32_t val)
 {
     TN_ASSERT(buffer);
     if (!aws_byte_buf_write_be32(&buffer->buf, val)) return TN_ERROR;
@@ -136,7 +136,7 @@ int tn_buffer_write_be32(tn_buffer_t *buffer, uint32_t val)
 }
 
 // --------------------------------------------------------------------------------------------------------------
-int tn_buffer_write_be64(tn_buffer_t *buffer, uint64_t val)
+int tn_buffer_write_be64(tn_buffer_t *buffer, const uint64_t val)
 {
     TN_ASSERT(buffer);
     if (!aws_byte_buf_write_be64(&buffer->buf, val)) return TN_ERROR;

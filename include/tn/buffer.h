@@ -40,11 +40,11 @@ int tn_buffer_read_be16(tn_buffer_t *buffer, uint16_t *out_val);
 int tn_buffer_read_be32(tn_buffer_t *buffer, uint32_t *out_val);
 int tn_buffer_read_be64(tn_buffer_t *buffer, uint64_t *out_val);
 int tn_buffer_read_buffer(tn_buffer_t *buffer, tn_buffer_t *dst_buffer, size_t len);
-int tn_buffer_write(tn_buffer_t *buffer, void *src_buffer, size_t len);
-int tn_buffer_write_u8(tn_buffer_t *buffer, uint8_t val);
-int tn_buffer_write_be16(tn_buffer_t *buffer, uint16_t val);
-int tn_buffer_write_be32(tn_buffer_t *buffer, uint32_t val);
-int tn_buffer_write_be64(tn_buffer_t *buffer, uint64_t val);
+int tn_buffer_write(tn_buffer_t *buffer, const void *src_buffer, size_t len);
+int tn_buffer_write_u8(tn_buffer_t *buffer, const uint8_t val);
+int tn_buffer_write_be16(tn_buffer_t *buffer, const uint16_t val);
+int tn_buffer_write_be32(tn_buffer_t *buffer, const uint32_t val);
+int tn_buffer_write_be64(tn_buffer_t *buffer, const uint64_t val);
 int tn_buffer_write_buffer(tn_buffer_t *buffer, tn_buffer_t *src_buffer, size_t len);
 
 void tn_buffer_read_reset(tn_buffer_t *buffer);

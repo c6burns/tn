@@ -75,6 +75,8 @@ set(CMAKE_PROJECT_NAME ${ORIG_CMAKE_PROJECT_NAME})
 #
 # libuv dependency
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(libuv_buildtests OFF CACHE BOOL "" FORCE)
+mark_as_advanced(FORCE BUILD_TESTING libuv_buildtests)
 
 if(NOT EXISTS ${TN_DEPS_DIR}/libuv)
 	execute_process(COMMAND git clone https://github.com/c6burns/libuv WORKING_DIRECTORY ${TN_DEPS_DIR})

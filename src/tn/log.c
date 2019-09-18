@@ -107,10 +107,10 @@ void tn_log_setup(void)
     tn_log_set_udata(&tn_log_mtx);
     tn_log_set_lock(tn_log_lock_impl);
 
-#    ifdef TN_LOG_FILENAME
+#   ifdef TN_LOG_FILENAME
     tn_log_fp = fopen(TN_LOG_FILENAME, "a+");
     if (tn_log_fp) tn_log_set_fp(tn_log_fp);
-#    endif
+#   endif
 
     tn_log_trace("Application logging started ... ");
 

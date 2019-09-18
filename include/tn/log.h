@@ -14,7 +14,7 @@
 #    define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
-#define TN_LOG_FILENAME "hubbub.log"
+#define TN_LOG_FILENAME "tn.log"
 //#define TN_LOG_DISABLE
 #define TN_LOG_USE_COLOR
 #define TN_THREAD_ID tn_thread_id()

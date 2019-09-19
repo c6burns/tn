@@ -142,6 +142,8 @@ set(TN_LIBRARY_SRCS
 	include/tn/cmd.h
 	src/tn/term.c
 	include/tn/term.h
+	src/tn/dso.c
+	include/tn/dso.h
 	include/tn/error.h
 	include/tn/test_harness.h
 	include/tn/config.h

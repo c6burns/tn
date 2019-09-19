@@ -31,8 +31,8 @@ function(tn_generate_test_driver driver_exe_name namespace)
 
     target_link_libraries(${driver_exe_name} PRIVATE ${TARGET_PREFIX_STR})
 
-    set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-    target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
+    #set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+    target_compile_definitions(${driver_exe_name} PRIVATE -DAWS_UNSTABLE_TESTING_API)
     target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
     foreach(name IN LISTS TEST_CASES)

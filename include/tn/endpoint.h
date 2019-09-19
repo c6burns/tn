@@ -6,16 +6,28 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if TN_PLATFORM_OSX
+#    define TN_AF_TYPE uint8_t
+#else
+#    define TN_AF_TYPE uint16_t
+#endif
+
 #define TN_ENDPOINT_MAX_SIZE 28
 
 typedef struct tn_sockaddr4_s {
-    uint16_t family;
+#if TN_PLATFORM_OSX
+    uint8_t len;
+#endif
+    TN_AF_TYPE family;
     uint16_t port;
     uint32_t addr;
 } tn_sockaddr4_t;
 
 typedef struct tn_sockaddr6_s {
-    uint16_t family;
+#if TN_PLATFORM_OSX
+    uint8_t len;
+#endif
+    TN_AF_TYPE family;
     uint16_t port;
     uint32_t flowinfo;
     uint8_t addr[16];

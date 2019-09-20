@@ -8,11 +8,12 @@
 #include "tn/queue_spsc.h"
 
 #define TN_EVENT_MAX_SIZE 64
-#define TN_EVENT_PAD_SIZE (TN_EVENT_MAX_SIZE) - sizeof(uint32_t) - sizeof(uint32_t)
+#define TN_EVENT_PAD_SIZE (TN_EVENT_MAX_SIZE) - sizeof(uint32_t) - sizeof(uint32_t) - sizeof(uint64_t)
 
 #define TN_EVENT_FIELDS \
     uint32_t id;        \
-    uint32_t type;
+    uint32_t type;      \
+    uint64_t cmd_id;
 
 typedef enum tn_event_type_e {
     TN_EVENT_NONE,
@@ -25,7 +26,7 @@ typedef enum tn_event_type_e {
     TN_EVENT_STATS,
 } tn_event_type_t;
 
-// base event
+/* base event */
 typedef struct tn_event_base_s {
     TN_EVENT_FIELDS
     uint8_t pad[TN_EVENT_PAD_SIZE];
@@ -34,11 +35,13 @@ typedef struct tn_event_base_s {
 // service started
 typedef struct tn_event_service_start_s {
     TN_EVENT_FIELDS
+    void *service;
 } tn_event_service_start_t;
 
 // service stopped
 typedef struct tn_event_service_stop_s {
     TN_EVENT_FIELDS
+    void *service;
 } tn_event_service_stop_t;
 
 // error event
@@ -51,7 +54,6 @@ typedef struct tn_event_error_s {
 // client connected
 typedef struct tn_event_client_open_s {
     TN_EVENT_FIELDS
-    uint64_t cmd_id;
     uint64_t client_id;
     tn_endpoint_t host;
     uint8_t client_type;
@@ -60,7 +62,6 @@ typedef struct tn_event_client_open_s {
 // client disconnected
 typedef struct tn_event_client_close_s {
     TN_EVENT_FIELDS
-    uint64_t cmd_id;
     uint64_t client_id;
     int32_t error_code;
 } tn_event_client_close_t;
@@ -78,17 +79,17 @@ typedef struct tn_event_client_read_s {
 // IO stats
 typedef struct tn_event_stats_s {
     TN_EVENT_FIELDS
-    //uint64_t clients_total;
-    //uint64_t recv_msgs;
-    //uint64_t recv_bytes;
-    //uint64_t send_msgs;
-    //uint64_t send_bytes;
-    //uint64_t events_total;
-    //uint64_t events_inuse;
-    //uint64_t events_free;
-    //uint64_t buffers_total;
-    //uint64_t buffers_inuse;
-    //uint64_t buffers_free;
+    uint32_t clients_total;
+    uint32_t recv_msgs;
+    uint32_t recv_bytes;
+    uint32_t send_msgs;
+    uint32_t send_bytes;
+    uint32_t events_total;
+    uint32_t events_inuse;
+    uint32_t events_free;
+    uint32_t buffers_total;
+    uint32_t buffers_inuse;
+    uint32_t buffers_free;
 } tn_event_stats_t;
 
 typedef struct tn_event_list_s {
@@ -99,6 +100,8 @@ typedef struct tn_event_list_s {
 } tn_event_list_t;
 
 TN_STATIC_ASSERT(sizeof(tn_event_base_t) == TN_EVENT_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_event_service_start_t) <= TN_EVENT_MAX_SIZE);
+TN_STATIC_ASSERT(sizeof(tn_event_service_stop_t) <= TN_EVENT_MAX_SIZE);
 TN_STATIC_ASSERT(sizeof(tn_event_error_t) <= TN_EVENT_MAX_SIZE);
 TN_STATIC_ASSERT(sizeof(tn_event_client_open_t) <= TN_EVENT_MAX_SIZE);
 TN_STATIC_ASSERT(sizeof(tn_event_client_close_t) <= TN_EVENT_MAX_SIZE);

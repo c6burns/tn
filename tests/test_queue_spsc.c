@@ -7,7 +7,6 @@
 #include "tn/thread.h"
 #include "tn/queue_spsc.h"
 
-
 static uint64_t queue_capacity = (1 << 25);// (1 << 10);
 static uint64_t msgs_limit = 10000000;
 static uint64_t err_read, err_write;
@@ -85,7 +84,7 @@ void produce_spsc_thread_run(void *priv)
 }
 
 
-TN_TEST_CASE_BEGIN(queue_spsc_stress)
+TN_TEST_CASE_BEGIN(tn_queue_spsc_stress)
 	tn_queue_spsc_t queue;
 	tn_thread_t consume_thread, produce_thread;
 	static uint64_t tstamp_start, tstamp_end;
@@ -130,7 +129,7 @@ cleanup:
 	return TN_ERROR;
 }
 
-TN_TEST_CASE_BEGIN(queue_spsc_empty)
+TN_TEST_CASE_BEGIN(tn_queue_spsc_testempty)
 	uintptr_t intptr;
 	uintptr_t intptr2;
 	tn_queue_spsc_t queue;
@@ -164,7 +163,7 @@ TN_TEST_CASE_BEGIN(queue_spsc_empty)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE_BEGIN(queue_spsc_full)
+TN_TEST_CASE_BEGIN(tn_queue_spsc_testfull)
 	uintptr_t intptr = 97234;
 	uintptr_t intptr2 = 83214;
 	tn_queue_spsc_t queue;
@@ -190,7 +189,7 @@ TN_TEST_CASE_BEGIN(queue_spsc_full)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE_BEGIN(queue_spsc_npot)
+TN_TEST_CASE_BEGIN(tn_queue_spsc_npot)
 	tn_queue_spsc_t queue;
 	ASSERT_SUCCESS(TN_ERROR_INVAL == tn_queue_spsc_setup(&queue, 11));
 	ASSERT_TRUE(16 == tn_queue_spsc_capacity(&queue));
@@ -207,7 +206,7 @@ TN_TEST_CASE_BEGIN(queue_spsc_npot)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE(test_queue_spsc_stress, queue_spsc_stress)
-TN_TEST_CASE(test_queue_spsc_empty, queue_spsc_empty)
-TN_TEST_CASE(test_queue_spsc_full, queue_spsc_full)
-TN_TEST_CASE(test_queue_spsc_npot, queue_spsc_npot)
+TN_TEST_CASE(tn_queue_spsc_stress);
+TN_TEST_CASE(tn_queue_spsc_testempty);
+TN_TEST_CASE(tn_queue_spsc_testfull);
+TN_TEST_CASE(tn_queue_spsc_npot);

@@ -2,7 +2,7 @@
 #include "tn/buffer.h"
 #include "tn/buffer_pool.h"
 
-TN_TEST_CASE_BEGIN(test_buffer)
+TN_TEST_CASE_BEGIN(tn_buffer_ops)
 	tn_buffer_pool_t pool;
 	tn_buffer_t *buffer1 = NULL;
 	tn_buffer_t *buffer2 = NULL;
@@ -49,4 +49,4 @@ TN_TEST_CASE_BEGIN(test_buffer)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE(test_buffer_pool, test_buffer)
+TN_TEST_CASE(tn_buffer_ops);

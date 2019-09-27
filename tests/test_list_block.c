@@ -3,7 +3,7 @@
 #include "tn/test_harness.h"
 #include "tn/list_block.h"
 
-TN_TEST_CASE_BEGIN(list_block_create)
+TN_TEST_CASE_BEGIN(tn_list_block_create)
 	tn_list_block_t list;
 
 	ASSERT_SUCCESS(tn_list_block_setup(&list, 128, sizeof(uintptr_t)));
@@ -19,7 +19,7 @@ TN_TEST_CASE_BEGIN(list_block_create)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE_BEGIN(list_block_ops)
+TN_TEST_CASE_BEGIN(tn_list_block_ops)
 	tn_list_block_t list;
 	uint64_t data0 = 12983712837;
 	uint64_t data1 = 97829736300;
@@ -56,5 +56,5 @@ TN_TEST_CASE_BEGIN(list_block_ops)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE(test_list_block_create, list_block_create);
-TN_TEST_CASE(test_list_block_ops, list_block_ops);
+TN_TEST_CASE(tn_list_block_create);
+TN_TEST_CASE(tn_list_block_ops);

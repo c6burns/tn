@@ -3,7 +3,7 @@
 #include "tn/test_harness.h"
 #include "tn/list_ptr.h"
 
-TN_TEST_CASE_BEGIN(list_ptr_create)
+TN_TEST_CASE_BEGIN(tn_list_ptr_create)
 	tn_list_ptr_t list;
 
 	ASSERT_SUCCESS(tn_list_ptr_setup(&list, 128));
@@ -23,7 +23,7 @@ TN_TEST_CASE_BEGIN(list_ptr_create)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE_BEGIN(list_ptr_ops)
+TN_TEST_CASE_BEGIN(tn_list_ptr_ops)
 	tn_list_ptr_t list;
 	uint64_t data0 = 12983712837;
 	uint64_t data1 = 97829736300;
@@ -58,5 +58,5 @@ TN_TEST_CASE_BEGIN(list_ptr_ops)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE(test_list_ptr_create, list_ptr_create);
-TN_TEST_CASE(test_list_ptr_ops, list_ptr_ops);
+TN_TEST_CASE(tn_list_ptr_create);
+TN_TEST_CASE(tn_list_ptr_ops);

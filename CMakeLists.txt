@@ -144,6 +144,8 @@ set(TN_LIBRARY_SRCS
 	include/tn/term.h
 	src/tn/dso.c
 	include/tn/dso.h
+	src/tn/heap.c
+	include/tn/heap.h
 	include/tn/error.h
 	include/tn/test_harness.h
 	include/tn/config.h
@@ -160,31 +162,33 @@ set(TN_TESTS_C
 	"tests/test_buffer.c"
 	"tests/test_endpoint.c"
 	"tests/test_event.c"
+	"tests/test_heap.c"
 	"tests/test_list_block.c"
 	"tests/test_list_ptr.c"
 	"tests/test_queue_spsc.c"
 )
 set(TESTS ${TN_TESTS_C})
 
-tn_add_test_case(test_events)
-tn_add_test_case(test_buffer_pool)
-tn_add_test_case(test_endpoints)
-tn_add_test_case(test_list_block_create)
-tn_add_test_case(test_list_block_ops)
-tn_add_test_case(test_list_ptr_create)
-tn_add_test_case(test_list_ptr_ops)
-tn_add_test_case(test_queue_spsc_stress)
-tn_add_test_case(test_queue_spsc_empty)
-tn_add_test_case(test_queue_spsc_full)
-tn_add_test_case(test_queue_spsc_npot)
+tn_add_test_case(tn_buffer_ops)
+tn_add_test_case(tn_endpoint_ops)
+tn_add_test_case(tn_event_list_ops)
+tn_add_test_case(tn_heap_ops)
+tn_add_test_case(tn_list_block_create)
+tn_add_test_case(tn_list_block_ops)
+tn_add_test_case(tn_list_ptr_create)
+tn_add_test_case(tn_list_ptr_ops)
+tn_add_test_case(tn_queue_spsc_stress)
+tn_add_test_case(tn_queue_spsc_testempty)
+tn_add_test_case(tn_queue_spsc_testfull)
+tn_add_test_case(tn_queue_spsc_npot)
 
 tn_generate_test_driver(tn-tests tn)
 target_link_libraries(tn-tests ${TN_LIBRARIES})
 target_compile_definitions(tn-tests PRIVATE ${TN_TARGET_COMPILE_DEFS})
 
 # runner for single test for easy debug step through an impl issue
-#tn_test_single(test_event test_events "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
-#tn_test_single(test_endpoint test_endpoints "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
+#tn_test_single(test_heap tn_heap_ops "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
+#tn_test_single(test_endpoint tn_endpoint_ops "${TN_LIBRARIES}" "${TN_TARGET_COMPILE_DEFS}")
 
 set(TN_INCLUDE_DIRS ${TN_INCLUDE_DIRS} PARENT_SCOPE)
 set(TN_LIBRARIES ${TN_LIBRARIES} PARENT_SCOPE)

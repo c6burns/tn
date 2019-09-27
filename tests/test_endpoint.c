@@ -5,7 +5,7 @@
 #include "tn/log.h"
 #include "tn/test_harness.h"
 
-TN_TEST_CASE_BEGIN(test_endpoint)
+TN_TEST_CASE_BEGIN(tn_endpoint_ops)
     uint16_t port;
     char buf[255];
     tn_endpoint_t endpoint;
@@ -98,4 +98,4 @@ TN_TEST_CASE_BEGIN(test_endpoint)
     return TN_SUCCESS;
 }
 
-TN_TEST_CASE(test_endpoints, test_endpoint)
+TN_TEST_CASE(tn_endpoint_ops);

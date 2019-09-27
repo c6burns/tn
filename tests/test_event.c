@@ -4,7 +4,7 @@
 
 #include <string.h>
 
-TN_TEST_CASE_BEGIN(test_event_list)
+TN_TEST_CASE_BEGIN(tn_event_list_ops)
 	tn_event_list_t event_list;
 	tn_event_base_t *evt;
 	tn_event_client_open_t *evt_open;
@@ -71,4 +71,4 @@ TN_TEST_CASE_BEGIN(test_event_list)
 	return TN_SUCCESS;
 }
 
-TN_TEST_CASE(test_events, test_event_list);
+TN_TEST_CASE(tn_event_list_ops);
